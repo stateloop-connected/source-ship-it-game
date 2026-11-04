@@ -4,7 +4,7 @@
 
 **Run a tiny software factory.**
 
-Pick a job. Press Play. Get paid when it ships.
+Press Start playing. Your first job starts automatically.
 
 [**▶ Play in your browser**](https://hamanakam1.github.io/ship-it-game/) · [Player guide](docs/PLAYER-GUIDE.md) · [What's new](CHANGELOG.md)
 
@@ -16,10 +16,9 @@ Free. No account. No install. No purchases.
 
 ## How to play
 
-1. Press **Start playing**. Your team is already hired.
-2. Choose **Accept job** under a job you like.
-3. Press **Play**. Your team plans, builds, checks, and ships it automatically.
-4. Get paid, then choose another job.
+1. Press **Start playing**. We accept your first job and start your team.
+2. Watch the job move through Plan, Build, Check, and Ship. Pause any time.
+3. Get paid, then choose another job under **New jobs** and press **Play**.
 
 The card above the factory tells you what to do next. Time pauses when the last job ships, unless customer checks or repairs are still pending.
 

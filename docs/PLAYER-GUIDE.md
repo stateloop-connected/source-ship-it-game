@@ -2,9 +2,9 @@
 
 ## Start with one job
 
-1. Press **Start playing**.
-2. Under **New jobs**, pick a job and press **Accept job**.
-3. Press **Play**.
+1. Press **Start playing**. Your first job is accepted and begins automatically.
+2. Watch your team work. Press **Pause** whenever you want.
+3. After delivery, pick another job under **New jobs**, press **Accept job**, then **Play**.
 
 Your starting team is already hired and assigned. They move the job through **Plan → Build → Check → Ship** automatically. You get paid when it ships.
 

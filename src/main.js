@@ -366,7 +366,7 @@ function startDialog() {
   render();
   showDialog(
     'start',
-    `<div class="welcome-art"><span class="welcome-stamp">YOUR TEAM IS READY.</span><div class="hero-factory">${icon('factory', 80)}</div><span class="hero-crate crate-a">SPEC</span><span class="hero-crate crate-b">BUILD</span><span class="hero-crate crate-c">SHIP</span><div class="welcome-title"><span class="eyebrow">A SMALL TEAM. AN UNREASONABLE DEADLINE.</span><h2 id="dialog-title">Run a tiny<br><em>software factory.</em></h2><p>Pick jobs. Let your team build them. Get paid when they ship.</p></div></div><div class="welcome-body">${started ? closeButton() : ''}<ol class="quick-start"><li><b>1</b><span>Pick a job</span></li><li><b>2</b><span>Press Play</span></li><li><b>3</b><span>Get paid</span></li></ol><p class="start-summary" id="start-summary">${SCENARIOS[startScenario].name} · ${STUDIOS[startStudio].name} · ${SCENARIOS[startScenario].goal ? `Ship ${SCENARIOS[startScenario].goal} jobs in ${SCENARIOS[startScenario].days} days.` : 'No deadline.'}</p><div class="start-buttons"><button class="button primary large" data-action="start">${saved ? 'Start fresh' : 'Start playing'} ${icon('arrow', 19)}</button>${saved ? '<button class="button secondary large" data-action="continue">Continue my factory</button>' : ''}</div><details class="start-options"><summary>Change game options</summary><div class="scenario-options">${Object.entries(
+    `<div class="welcome-art"><span class="welcome-stamp">YOUR TEAM IS READY.</span><div class="hero-factory">${icon('factory', 80)}</div><span class="hero-crate crate-a">SPEC</span><span class="hero-crate crate-b">BUILD</span><span class="hero-crate crate-c">SHIP</span><div class="welcome-title"><span class="eyebrow">A SMALL TEAM. AN UNREASONABLE DEADLINE.</span><h2 id="dialog-title">Run a tiny<br><em>software factory.</em></h2><p>Your first job starts automatically. Watch your team build it and get paid.</p></div></div><div class="welcome-body">${started ? closeButton() : ''}<ol class="quick-start"><li><b>1</b><span>Start playing</span></li><li><b>2</b><span>Watch your team</span></li><li><b>3</b><span>Get paid</span></li></ol><p class="start-summary" id="start-summary">${SCENARIOS[startScenario].name} · ${STUDIOS[startStudio].name} · ${SCENARIOS[startScenario].goal ? `Ship ${SCENARIOS[startScenario].goal} jobs in ${SCENARIOS[startScenario].days} days.` : 'No deadline.'}</p><div class="start-buttons"><button class="button primary large" data-action="start">${saved ? 'Start fresh' : 'Start playing'} ${icon('arrow', 19)}</button>${saved ? '<button class="button secondary large" data-action="continue">Continue my factory</button>' : ''}</div><details class="start-options"><summary>Change game options</summary><div class="scenario-options">${Object.entries(
       SCENARIOS,
     )
       .map(
@@ -449,7 +449,7 @@ function menuDialog() {
   render();
   showDialog(
     'menu',
-    `${closeButton()}<span class="eyebrow">TAKE A BREATHER</span><h2 id="dialog-title">The workshop menu.</h2><div class="menu-grid"><button class="button secondary" data-action="export">${icon('download')} Export save</button><button class="button secondary" data-action="import">Import save</button><button class="button secondary" data-action="share">Share challenge</button><button class="button secondary" data-action="report">Factory report</button><button class="button secondary" data-action="help">How to play</button><button class="button secondary" data-action="new">New factory</button></div><div class="settings-row"><label for="sound-setting">Sound effects <small>Quiet feedback for actions and deliveries</small></label><input id="sound-setting" type="checkbox" data-setting="sound" ${settings.sound ? 'checked' : ''}/></div><div class="settings-row"><label for="motion-setting">Animated workshop <small>Switch off for reduced motion</small></label><input id="motion-setting" type="checkbox" data-setting="motion" ${settings.motion ? 'checked' : ''}/></div><p class="tiny-note">Autosaves stay in this browser. Export a save to move devices or keep multiple factories. Opening menus pauses the shift.</p><div class="about-line"><strong>Ship It! · v1.2.0</strong><span>Made for people who make things.</span></div>`,
+    `${closeButton()}<span class="eyebrow">TAKE A BREATHER</span><h2 id="dialog-title">The workshop menu.</h2><div class="menu-grid"><button class="button secondary" data-action="export">${icon('download')} Export save</button><button class="button secondary" data-action="import">Import save</button><button class="button secondary" data-action="share">Share challenge</button><button class="button secondary" data-action="report">Factory report</button><button class="button secondary" data-action="help">How to play</button><button class="button secondary" data-action="new">New factory</button></div><div class="settings-row"><label for="sound-setting">Sound effects <small>Quiet feedback for actions and deliveries</small></label><input id="sound-setting" type="checkbox" data-setting="sound" ${settings.sound ? 'checked' : ''}/></div><div class="settings-row"><label for="motion-setting">Animated workshop <small>Switch off for reduced motion</small></label><input id="motion-setting" type="checkbox" data-setting="motion" ${settings.motion ? 'checked' : ''}/></div><p class="tiny-note">Autosaves stay in this browser. Export a save to move devices or keep multiple factories. Opening menus pauses the shift.</p><div class="about-line"><strong>Ship It! · v1.2.1</strong><span>Made for people who make things.</span></div>`,
   );
 }
 function helpDialog() {
@@ -457,7 +457,7 @@ function helpDialog() {
   render();
   showDialog(
     'help',
-    `${closeButton()}<span class="eyebrow">HOW TO PLAY</span><h2 id="dialog-title">Three steps. One little factory.</h2><ol class="simple-help"><li><h3>Pick a job</h3><p>Open New jobs and press Accept job. Your starting team is already assigned.</p></li><li><h3>Press Play</h3><p>Your team plans, builds, checks, and ships automatically. Pause whenever you want.</p></li><li><h3>Get paid, then repeat</h3><p>Money arrives when the job ships. Your team is paid every game day, so keep work moving.</p></li></ol><p class="dialog-lede">${SCENARIOS[s.scenario].goal ? `Win by shipping ${SCENARIOS[s.scenario].goal} jobs within ${SCENARIOS[s.scenario].days} days. Finish with at least $0, 45 reputation, and no unfinished jobs or repairs.` : 'This is a sandbox. There is no deadline or game-over condition.'}</p><details class="extra-help"><summary>When you want more control</summary><p>Use More controls to hire people, add stations, choose work policies, buy coffee, and see trophies. Select a station to manage it. A new station needs a worker.</p><p>Late jobs pay less. Bugs that reach customers return as unpaid repairs. Maintaining idle stations removes wear and some code cleanup work.</p><p>Space plays or pauses. N advances one hour. B opens the station catalog. The menu contains saves, sharing, and sound settings.</p></details><div class="dialog-actions"><button class="button primary" data-action="close">Got it</button></div>`,
+    `${closeButton()}<span class="eyebrow">HOW TO PLAY</span><h2 id="dialog-title">Three steps. One little factory.</h2><ol class="simple-help"><li><h3>Start playing</h3><p>Your first job is accepted and starts automatically. Your team is already hired and assigned.</p></li><li><h3>Watch your team</h3><p>Your team plans, builds, checks, and ships the job. Press Pause whenever you want.</p></li><li><h3>Get paid, then repeat</h3><p>Money arrives when the job ships. Then choose your next job under New jobs and press Play. Your team is paid every game day, so keep work moving.</p></li></ol><p class="dialog-lede">${SCENARIOS[s.scenario].goal ? `Win by shipping ${SCENARIOS[s.scenario].goal} jobs within ${SCENARIOS[s.scenario].days} days. Finish with at least $0, 45 reputation, and no unfinished jobs or repairs.` : 'This is a sandbox. There is no deadline or game-over condition.'}</p><details class="extra-help"><summary>When you want more control</summary><p>Use More controls to hire people, add stations, choose work policies, buy coffee, and see trophies. Select a station to manage it. A new station needs a worker.</p><p>Late jobs pay less. Bugs that reach customers return as unpaid repairs. Maintaining idle stations removes wear and some code cleanup work.</p><p>Space plays or pauses. N advances one hour. B opens the station catalog. The menu contains saves, sharing, and sound settings.</p></details><div class="dialog-actions"><button class="button primary" data-action="close">Got it</button></div>`,
   );
 }
 function download() {
@@ -669,13 +669,24 @@ document.addEventListener('click', async (e) => {
     $('#seed-input').value = `SHIFT-${bytes[0].toString(36).toUpperCase()}`;
   } else if (a === 'start') {
     s = newGame($('#seed-input').value, startScenario, startStudio);
-    selected = 's2';
-    tab = 'inbox';
+    const firstJob = s.offers[0];
+    const accepted = act(s, { type: 'accept', id: firstJob.id });
+    selected = 's1';
+    tab = 'active';
     mode = null;
     started = true;
+    speed = 1;
+    accumulator = 0;
+    lastTime = performance.now();
+    running = accepted.ok;
     closeDialog();
     persist();
     render();
+    toast(
+      accepted.ok
+        ? 'Your first job is underway. Your team will handle it—pause any time.'
+        : accepted.message,
+    );
   } else if (a === 'continue') {
     if (saved) {
       s = structuredClone(saved);

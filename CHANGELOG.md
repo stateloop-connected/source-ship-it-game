@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.1 — Your first job is ready
+
+- Starting a new factory accepts the first available job and starts work at normal speed.
+- First-job guidance explains what is happening and how to pause.
+- Continuing or importing an existing factory still leaves time paused and adds no jobs.
+- Updated start screen, help, and guides for the automatic first job.
+
 ## 1.2.0 — A simpler start
 
 - Start playing with one button; studio, scenario, and seed choices are optional.

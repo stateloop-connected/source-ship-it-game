@@ -30,7 +30,7 @@ export function nextStep(s, running) {
   if (!s.jobs.length && !s.warranty.length && (!goal || s.delivered < goal)) {
     return s.offers.length
       ? {
-          title: s.delivered ? 'Paid! Pick your next job.' : '1. Pick a job.',
+          title: s.delivered ? 'Paid! Pick your next job.' : 'Pick a job.',
           text: s.delivered
             ? `You have shipped ${s.delivered}${goal ? ` of ${goal}` : ''} jobs. Choose another from New jobs.`
             : 'Your team is already hired. Choose a job to give them something to make.',
@@ -45,7 +45,7 @@ export function nextStep(s, running) {
   }
   if (!running)
     return {
-      title: '2. Press Play.',
+      title: 'Press Play.',
       text: 'Your team plans, builds, checks, and ships the work automatically. You can pause any time.',
       action: 'play',
       label: 'Play',
@@ -62,8 +62,13 @@ export function nextStep(s, running) {
       action: 'report',
       label: 'See results',
     };
+  if (s.stats.accepted === 1 && !s.delivered)
+    return {
+      title: 'Your first job is underway.',
+      text: 'We picked your first job and started the team for you. Watch it move through Plan, Build, Check, and Ship. You can pause any time.',
+    };
   return {
-    title: '3. Your team is working.',
+    title: 'Your team is working.',
     text: 'Watch the job move along the four steps below. You get paid when it ships. No clicking is needed.',
   };
 }
