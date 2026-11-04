@@ -3159,3 +3159,195 @@ kbd {
 .coffee-button:disabled {
   opacity: 1;
 }
+
+/* Start small. Management tools are available when the player wants them. */
+.quick-start {
+  display: flex;
+  list-style: none;
+  gap: 24px;
+  padding: 0;
+  margin: 0 0 22px;
+}
+.quick-start li {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 650;
+  color: #28402e;
+}
+.quick-start b {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  background: #dce8c5;
+  border-radius: 50%;
+}
+.start-summary {
+  color: #4d6353;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.start-options {
+  margin-top: 22px;
+  border-top: 1px solid #ccd2c1;
+  padding-top: 18px;
+}
+.start-options summary {
+  cursor: pointer;
+  color: #354e3a;
+  font-size: 13px;
+  font-weight: 650;
+  margin-bottom: 15px;
+}
+.simple-goal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin-bottom: 16px;
+  padding: 14px 18px;
+  background: #20382d;
+  border: 1px solid #466043;
+  border-radius: 12px;
+}
+.simple-goal strong {
+  color: #d7edbd;
+  font-size: 14px;
+}
+.simple-goal span {
+  color: #c1ceb9;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.next-step {
+  position: relative;
+  background: #edf1e2;
+  color: #25382b;
+  border-radius: 14px;
+  padding: 20px 180px 20px 22px;
+  margin-bottom: 16px;
+  min-height: 126px;
+}
+.next-step .eyebrow {
+  color: #54664e;
+  font-size: 9px;
+}
+.next-step h2 {
+  margin: 8px 0;
+  font-size: 23px;
+}
+.next-step p {
+  margin: 0;
+  max-width: 650px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.next-step .button {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #2e4a32;
+  color: #eff5df;
+}
+.next-step .working-hint {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #52634d;
+}
+.next-step:not(:has(button)) {
+  padding-right: 22px;
+}
+.simple-help {
+  padding-left: 24px;
+}
+.simple-help li {
+  padding-left: 8px;
+  margin-bottom: 20px;
+}
+.simple-help h3 {
+  margin: 0 0 8px;
+}
+.simple-help p,
+.extra-help p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #b9cbd6;
+}
+.extra-help {
+  margin: 20px 0;
+}
+.extra-help summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.controls-toggle {
+  white-space: nowrap;
+  font-size: 12px;
+  padding: 9px 12px;
+}
+.simple-view .game-layout {
+  grid-template-columns: 268px minmax(0, 1fr);
+  max-width: 1440px;
+}
+.simple-view .inspector-panel,
+.simple-view #momentum,
+.simple-view .build-toolbar,
+.simple-view .activity,
+.simple-view .step-button,
+.simple-view .speed-controls,
+.simple-view .floor-heading .eyebrow {
+  display: none;
+}
+.simple-view .floor-wrap {
+  max-width: 870px;
+  margin: auto;
+}
+.simple-view .floor-heading {
+  margin-bottom: 16px;
+}
+.simple-view .center {
+  min-width: 0;
+}
+.simple-view .contract-card .effort-bar,
+.simple-view .contract-card .contract-top .tag,
+.simple-view .micro-label > span {
+  display: none;
+}
+@media (max-width: 950px) {
+  .next-step {
+    padding: 18px;
+  }
+  .next-step .button {
+    position: static;
+    transform: none;
+    margin-top: 14px;
+  }
+}
+@media (max-width: 680px) {
+  .simple-view .game-layout {
+    display: flex;
+  }
+  .quick-start {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .quick-start li {
+    font-size: 12px;
+  }
+  .controls-toggle {
+    padding: 7px;
+    font-size: 10px;
+  }
+  .next-step h2 {
+    font-size: 21px;
+  }
+  .simple-goal {
+    padding: 12px;
+  }
+  .simple-view #floor > svg {
+    max-height: 310px;
+  }
+}

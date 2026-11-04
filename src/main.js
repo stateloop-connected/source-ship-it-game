@@ -17,6 +17,7 @@ import {
 } from './engine.js';
 import { renderFloor, esc } from './floor.js';
 import { STUDIOS } from './data.js';
+import { nextStep } from './guide.js';
 import { studioChoices, momentum, trophyCards, crewLine, celebrate } from './flair.js';
 
 const $ = (selector) => document.querySelector(selector);
@@ -30,10 +31,15 @@ try {
 } catch {
   storageWarning = true;
 }
-let settings = { sound: false, motion: !matchMedia('(prefers-reduced-motion: reduce)').matches };
+let settings = {
+  detailed: false,
+  sound: false,
+  motion: !matchMedia('(prefers-reduced-motion: reduce)').matches,
+};
 try {
   const x = JSON.parse(localStorage.getItem(SETTINGS_KEY));
-  if (x && typeof x.sound === 'boolean' && typeof x.motion === 'boolean') settings = x;
+  if (x && typeof x.sound === 'boolean' && typeof x.motion === 'boolean')
+    settings = { ...x, detailed: x.detailed === true };
 } catch {
   /* optional settings */
 }
@@ -50,8 +56,6 @@ let running = false,
   floorView = 'floor',
   started = false;
 let dialogKind = '',
-  tutorialStep = 0,
-  tutorial = false,
   startScenario = params.get('scenario') || 'garage';
 if (!Object.hasOwn(SCENARIOS, startScenario)) startScenario = 'garage';
 let toastTimer,
@@ -158,7 +162,7 @@ const closeButton = () =>
   `<button class="icon-btn modal-close" data-action="close" aria-label="Close dialog">${icon('x')}</button>`;
 function shell() {
   $('#app').innerHTML =
-    `<header class="topbar"><a class="brand" href="#" data-action="brand" aria-label="Ship It! game menu"><span class="brand-mark">${icon('factory', 25)}</span><span>ship it<span class="brand-dot">!</span><small>THE SOFTWARE FACTORY GAME</small></span></a><div class="top-metrics" id="top-metrics"></div><div class="top-actions"><button class="icon-btn" data-action="sound" id="sound-toggle" aria-label="Toggle sound">${icon('sound')}</button><button class="icon-btn" data-action="help" aria-label="How to play">${icon('help')}</button><button class="icon-btn" data-action="menu" aria-label="Game menu">${icon('menu')}</button></div></header><main class="game-layout"><aside class="contracts-panel"><div class="panel-heading"><div><span class="eyebrow">YOUR NEXT BIG THING</span><h2>Work orders<span class="dot green"></span></h2></div>${icon('box', 23)}</div><div class="tabs" id="contract-tabs"></div><div id="contracts" class="contracts-content"></div><div class="panel-foot"><span class="dot green"></span> New opportunities every 2 days</div></aside><section class="center"><div class="floor-heading"><div><div class="eyebrow">OPERATIONS / <span id="scenario-label"></span></div><h1>Your little empire.</h1><p id="floor-subtitle">Good work starts with a good flow.</p></div><div class="view-toggle"><button data-action="view" data-view="floor" id="view-floor" aria-label="Show illustrated factory">${icon('factory', 17)} Floor</button><button data-action="view" data-view="list" id="view-list" aria-label="Show station list">${icon('menu', 17)} List</button></div></div><div id="momentum"></div><div id="tutorial"></div><div class="floor-wrap" id="factory" tabindex="-1"><div id="floor"></div><div id="placement-banner"></div><div class="floor-badge"><span class="live-dot"></span><span id="floor-status">SHIFT PAUSED</span></div></div><div id="pipeline" class="pipeline"></div><div class="build-toolbar"><div><span class="eyebrow">MAKE ROOM FOR WHAT’S NEXT</span><strong>Grow your workshop</strong></div><div class="build-actions"><button class="button secondary" data-action="crew">${icon('crew', 18)} Hire crew</button><button class="button primary" data-action="build-menu">${icon('plus', 18)} Build a station</button></div></div><section class="activity"><div class="section-heading"><h2>On the factory floor</h2><button class="text-btn" data-action="log">Full journal ${icon('arrow', 14)}</button></div><div id="activity"></div></section></section><aside class="inspector-panel"><div id="inspector"></div><div id="campaign"></div></aside></main><footer class="shiftbar"><div class="shift-info" id="shift-info"></div><div class="transport"><button class="button play-button" id="play-button" data-action="play" data-focus="play">${icon('play', 16)} Start shift</button><button class="icon-btn step-button" data-action="step" aria-label="Advance one working hour" title="Advance one hour (N)">${icon('arrow', 18)}</button><div class="speed-controls" role="group" aria-label="Simulation speed"><button data-action="speed" data-speed="1">1×</button><button data-action="speed" data-speed="2">2×</button><button data-action="speed" data-speed="4">4×</button></div></div><div class="save-status"><span class="dot green"></span><span id="save-label">Saved on this device</span><kbd>SPACE</kbd> pause</div></footer><input type="file" id="import-file" accept=".json,application/json" hidden />`;
+    `<header class="topbar"><a class="brand" href="#" data-action="brand" aria-label="Ship It! game menu"><span class="brand-mark">${icon('factory', 25)}</span><span>ship it<span class="brand-dot">!</span><small>THE SOFTWARE FACTORY GAME</small></span></a><div class="top-metrics" id="top-metrics"></div><div class="top-actions"><button class="button secondary controls-toggle" data-action="controls" id="controls-toggle"></button><button class="icon-btn" data-action="sound" id="sound-toggle" aria-label="Toggle sound">${icon('sound')}</button><button class="icon-btn" data-action="help" aria-label="How to play">${icon('help')}</button><button class="icon-btn" data-action="menu" aria-label="Game menu">${icon('menu')}</button></div></header><main class="game-layout"><aside class="contracts-panel"><div class="panel-heading"><div><span class="eyebrow">YOUR NEXT BIG THING</span><h2>Jobs<span class="dot green"></span></h2></div>${icon('box', 23)}</div><div class="tabs" id="contract-tabs"></div><div id="contracts" class="contracts-content"></div><div class="panel-foot"><span class="dot green"></span> New opportunities every 2 days</div></aside><section class="center"><div class="floor-heading"><div><div class="eyebrow">OPERATIONS / <span id="scenario-label"></span></div><h1>Your factory.</h1><p id="floor-subtitle">Good work starts with a good flow.</p></div><div class="view-toggle"><button data-action="view" data-view="floor" id="view-floor" aria-label="Show illustrated factory">${icon('factory', 17)} Floor</button><button data-action="view" data-view="list" id="view-list" aria-label="Show station list">${icon('menu', 17)} List</button></div></div><div id="simple-goal" class="simple-goal"></div><div id="momentum"></div><div id="tutorial"></div><div class="floor-wrap" id="factory" tabindex="-1"><div id="floor"></div><div id="placement-banner"></div><div class="floor-badge"><span class="live-dot"></span><span id="floor-status">SHIFT PAUSED</span></div></div><div id="pipeline" class="pipeline"></div><div class="build-toolbar"><div><span class="eyebrow">MAKE ROOM FOR WHAT’S NEXT</span><strong>Grow your workshop</strong></div><div class="build-actions"><button class="button secondary" data-action="crew">${icon('crew', 18)} Hire crew</button><button class="button primary" data-action="build-menu">${icon('plus', 18)} Build a station</button></div></div><section class="activity"><div class="section-heading"><h2>On the factory floor</h2><button class="text-btn" data-action="log">Full journal ${icon('arrow', 14)}</button></div><div id="activity"></div></section></section><aside class="inspector-panel"><div id="inspector"></div><div id="campaign"></div></aside></main><footer class="shiftbar"><div class="shift-info" id="shift-info"></div><div class="transport"><button class="button play-button" id="play-button" data-action="play" data-focus="play">${icon('play', 16)} Start shift</button><button class="icon-btn step-button" data-action="step" aria-label="Advance one working hour" title="Advance one hour (N)">${icon('arrow', 18)}</button><div class="speed-controls" role="group" aria-label="Simulation speed"><button data-action="speed" data-speed="1">1×</button><button data-action="speed" data-speed="2">2×</button><button data-action="speed" data-speed="4">4×</button></div></div><div class="save-status"><span class="dot green"></span><span id="save-label">Saved on this device</span><kbd>SPACE</kbd> pause</div></footer><input type="file" id="import-file" accept=".json,application/json" hidden />`;
   render();
 }
 function replace(id, html) {
@@ -175,13 +179,20 @@ function replace(id, html) {
 }
 function render() {
   const def = SCENARIOS[s.scenario];
+  document.documentElement.classList.toggle('simple-view', !settings.detailed);
+  $('#controls-toggle').textContent = settings.detailed ? 'Simple view' : 'More controls';
+  $('#controls-toggle').setAttribute('aria-pressed', String(settings.detailed));
+  replace(
+    'simple-goal',
+    `<strong>${def.goal ? `Goal: ship ${def.goal} jobs in ${def.days} days` : 'Build at your own pace'}</strong><span>${def.goal ? `${s.delivered} of ${def.goal} shipped · Finish with $0+, 45 reputation, and no unfinished work.` : 'No deadline. Try jobs and grow your factory.'}</span>`,
+  );
   replace(
     'top-metrics',
     `<div class="metric"><span>CASH ON HAND</span><strong class="${s.cash < 500 ? 'warning-text' : ''}">${money(s.cash)}</strong></div><div class="metric"><span>REPUTATION</span><strong>${Math.round(s.reputation)}<small>/100</small><i class="tiny-bar"><i style="width:${s.reputation}%"></i></i></strong></div><div class="metric"><span>SHIPPED</span><strong>${s.delivered}<small>${def.goal ? `/${def.goal}` : ' projects'}</small></strong></div>`,
   );
   replace(
     'contract-tabs',
-    `<button data-action="tab" data-tab="inbox" class="${tab === 'inbox' ? 'active' : ''}">Inbox <span>${s.offers.length}</span></button><button data-action="tab" data-tab="active" class="${tab === 'active' ? 'active' : ''}">In progress <span>${s.jobs.length}</span></button>`,
+    `<button data-action="tab" data-tab="inbox" class="${tab === 'inbox' ? 'active' : ''}">New jobs <span>${s.offers.length}</span></button><button data-action="tab" data-tab="active" class="${tab === 'active' ? 'active' : ''}">In progress <span>${s.jobs.length}</span></button>`,
   );
   replace('contracts', tab === 'inbox' ? inbox() : jobs());
   $('#scenario-label').textContent = def.name.toUpperCase();
@@ -189,7 +200,9 @@ function render() {
     ? 'Choose a highlighted tile. Escape cancels placement.'
     : s.event
       ? 'Your crew needs a decision before work continues.'
-      : crewLine(s);
+      : settings.detailed
+        ? crewLine(s)
+        : 'Pick a job. Press Play. Get paid when it ships.';
   $('#view-floor').classList.toggle('active', floorView === 'floor');
   $('#view-list').classList.toggle('active', floorView === 'list');
   replace('floor', floorView === 'floor' ? renderFloor(s, selected, mode, speed) : stationList());
@@ -204,7 +217,7 @@ function render() {
     STAGES.map((type) => {
       const count = queueFor(s, type).length;
       const working = s.stations.filter((st) => st.type === type && st.busy).length;
-      return `<div class="pipe-stage" style="--stage:${STATIONS[type].color}"><span class="pipe-icon">${STATIONS[type].label}</span><div><strong>${STATIONS[type].short}</strong><span class="${count > 1 ? 'warning-text' : ''}">${working} working · ${count} waiting</span></div>${count > 1 ? '<i class="queue-alert" title="Work is accumulating here">!</i>' : ''}</div>`;
+      return `<div class="pipe-stage" style="--stage:${STATIONS[type].color}"><span class="pipe-icon">${STATIONS[type].label}</span><div><strong>${{ spec: 'Plan', build: 'Build', review: 'Check', ship: 'Ship' }[type]}</strong><span class="${count > 1 ? 'warning-text' : ''}">${working} working · ${count} waiting</span></div>${count > 1 ? '<i class="queue-alert" title="Work is accumulating here">!</i>' : ''}</div>`;
     }).join(''),
   );
   replace('momentum', momentum(s));
@@ -225,7 +238,7 @@ function render() {
     `<span class="shift-number">${String(Math.min(day(s), def.days || day(s))).padStart(2, '0')}</span><div><strong>${def.days ? `DAY OF ${def.days}` : 'SANDBOX DAY'}</strong><span>Hour ${(s.clock % 8) + 1} of 8 · ${money(wages(s))}/day</span></div>`,
   );
   $('#play-button').innerHTML =
-    `${icon(running ? 'pause' : 'play', 16)} ${running ? 'Pause shift' : s.clock ? 'Resume shift' : 'Start shift'}`;
+    `${icon(running ? 'pause' : 'play', 16)} ${running ? 'Pause' : 'Play'}`;
   $('#play-button').disabled = s.status !== 'playing';
   $('.step-button').disabled = running || s.status !== 'playing';
   document
@@ -256,20 +269,20 @@ function inbox() {
     s.offers
       .map((offer, i) => {
         const d = CONTRACTS[offer.template];
-        return `<article class="contract-card"><div class="contract-top"><span class="client-icon color-${i}">${d.icon.slice(0, 2)}</span><span class="tag">${d.effort[1] > 12 ? 'GROWTH' : 'SMALL BIZ'}</span></div><h3>${d.name}</h3><p>${d.product}</p><div class="contract-facts"><strong>${money(offer.reward)}</strong><span>${d.days - (s.scenario === 'crunch' ? 1 : 0)} days to deliver</span></div><div class="effort-bar" aria-label="Workload: ${d.effort.reduce((a, b) => a + b)} units">${d.effort.map((e, n) => `<i style="flex:${e};background:${STATIONS[STAGES[n]].color}"></i>`).join('')}</div><button class="accept-btn" data-action="accept" data-id="${offer.id}" data-focus="accept-${offer.id}" ${s.jobs.length >= 4 ? 'disabled' : ''}>${s.jobs.length >= 4 ? 'Factory at capacity' : 'Accept contract'} ${icon('arrow', 15)}</button></article>`;
+        return `<article class="contract-card"><div class="contract-top"><span class="client-icon color-${i}">${d.icon.slice(0, 2)}</span><span class="tag">${d.effort[1] > 12 ? 'GROWTH' : 'SMALL BIZ'}</span></div><h3>${d.name}</h3><p>${d.product}</p><div class="contract-facts"><strong>${money(offer.reward)}</strong><span>${d.days - (s.scenario === 'crunch' ? 1 : 0)} days to deliver</span></div><div class="effort-bar" aria-label="Workload: ${d.effort.reduce((a, b) => a + b)} units">${d.effort.map((e, n) => `<i style="flex:${e};background:${STATIONS[STAGES[n]].color}"></i>`).join('')}</div><button class="accept-btn" data-action="accept" data-id="${offer.id}" data-focus="accept-${offer.id}" ${s.jobs.length >= 4 ? 'disabled' : ''}>${s.jobs.length >= 4 ? 'Factory at capacity' : 'Accept job'} ${icon('arrow', 15)}</button></article>`;
       })
       .join('')
   );
 }
 function jobs() {
   if (!s.jobs.length)
-    return `<div class="empty-state">${icon('spark', 34)}<h3>Ready for the first order.</h3><p>Accept a contract from the inbox. Your crew will pick it up when the shift starts.</p><button class="button secondary" data-action="tab" data-tab="inbox">Browse contracts</button></div>`;
+    return `<div class="empty-state">${icon('spark', 34)}<h3>Ready for the first order.</h3><p>Accept a contract from the inbox. Your crew will pick it up when the shift starts.</p><button class="button secondary" data-action="tab" data-tab="inbox">Choose a job</button></div>`;
   return s.jobs
     .map((j) => {
       const d = CONTRACTS[j.template],
         remaining = Math.ceil((j.deadline - s.clock) / 8);
       const st = s.stations.find((st) => st.busy === j.id);
-      return `<article class="contract-card active-job"><div class="contract-top"><span class="tag ${j.warranty ? 'warm' : ''}">${j.warranty ? 'WARRANTY REPAIR' : 'IN PROGRESS'}</span><span class="${remaining < 2 ? 'warning-text' : 'muted'}">${remaining >= 0 ? `${remaining}d left` : `${-remaining}d late`}</span></div><h3>${d.name}</h3><p>${j.warranty ? 'Make it right. No additional revenue.' : d.product}</p><div class="job-stages">${STAGES.map((type, i) => `<span class="${i <= STAGES.indexOf(j.stage) ? 'reached' : ''}" style="--stage:${STATIONS[type].color}" title="${STATIONS[type].short}">${i < STAGES.indexOf(j.stage) ? '✓' : i + 1}</span>`).join('')}</div><div class="job-state"><span class="dot" style="background:${STATIONS[j.stage].color}"></span>${STATIONS[j.stage].short} · ${j.status === 'queued' ? 'waiting for a station' : j.readyAt > s.clock ? 'in transit' : `${Math.ceil(j.remaining)} work units left`}</div><div class="contract-facts"><strong>${money(j.reward)}</strong>${j.reworks ? `<span>${j.reworks} rework${j.reworks === 1 ? '' : 's'}</span>` : ''}</div>${st ? `<button class="text-btn" data-action="station" data-id="${st.id}">View workstation ${icon('arrow', 13)}</button>` : ''}${!j.warranty ? `<button class="text-btn danger subtle" data-action="cancel-confirm" data-id="${j.id}">Cancel contract</button>` : ''}</article>`;
+      return `<article class="contract-card active-job"><div class="contract-top"><span class="tag ${j.warranty ? 'warm' : ''}">${j.warranty ? 'WARRANTY REPAIR' : 'IN PROGRESS'}</span><span class="${remaining < 2 ? 'warning-text' : 'muted'}">${remaining >= 0 ? `${remaining}d left` : `${-remaining}d late`}</span></div><h3>${d.name}</h3><p>${j.warranty ? 'Make it right. No additional revenue.' : d.product}</p><div class="job-stages">${STAGES.map((type, i) => `<span class="${i <= STAGES.indexOf(j.stage) ? 'reached' : ''}" style="--stage:${STATIONS[type].color}" title="${STATIONS[type].short}">${i < STAGES.indexOf(j.stage) ? '✓' : i + 1}</span>`).join('')}</div><div class="job-state"><span class="dot" style="background:${STATIONS[j.stage].color}"></span>${STATIONS[j.stage].short} · ${j.status === 'queued' ? 'waiting for a station' : j.readyAt > s.clock ? 'in transit' : `${Math.ceil(j.remaining)} work units left`}</div><div class="contract-facts"><strong>${money(j.reward)}</strong>${j.reworks ? `<span>${j.reworks} rework${j.reworks === 1 ? '' : 's'}</span>` : ''}</div>${st ? `<button class="text-btn" data-action="station" data-id="${st.id}">Manage station ${icon('arrow', 13)}</button>` : ''}${!j.warranty ? `<button class="text-btn danger subtle" data-action="cancel-confirm" data-id="${j.id}">Cancel contract</button>` : ''}</article>`;
     })
     .join('');
 }
@@ -334,40 +347,18 @@ function campaign() {
         `${(i / Math.max(1, s.daily.length - 1)) * 220},${40 - Math.max(0, Math.min(40, (d.cash / Math.max(5000, ...s.daily.map((x) => x.cash))) * 40))}`,
     )
     .join(' ');
-  return `<div class="campaign-card"><div class="section-heading"><h3>${def.goal ? 'The big picture' : 'Your workshop'}</h3>${icon('spark', 17)}</div><p>${def.goal ? `Ship ${def.goal} contracts. Finish with 45+ reputation, positive cash, and no unfinished work.` : 'Build, experiment, and find your own rhythm.'}</p><div class="goal-label"><span>${def.goal ? 'CAMPAIGN PROGRESS' : 'CONTRACTS DELIVERED'}</span><strong>${s.delivered}${def.goal ? ` / ${def.goal}` : ''}</strong></div><div class="bar goal-bar"><i style="width:${goalProgress(s) * 100}%"></i></div><div class="debt-row"><span>Technical debt</span><strong class="${s.debt > 40 ? 'warning-text' : ''}">${Math.round(s.debt)}%</strong></div><div class="bar thin"><i style="width:${s.debt}%;background:#d5a4d1"></i></div><p class="tiny-note">Debt slows build work. Maintain idle stations to bring it down.</p>${pts ? `<svg viewBox="0 0 220 45" class="cash-chart" role="img" aria-label="Daily cash trend"><polyline points="${pts}" fill="none" stroke="#9bbf88" stroke-width="2"/></svg>` : ''}<button class="text-btn" data-action="report">View factory report ${icon('arrow', 14)}</button></div>`;
+  return `<div class="campaign-card"><div class="section-heading"><h3>${def.goal ? 'The big picture' : 'Your workshop'}</h3>${icon('spark', 17)}</div><p>${def.goal ? `Ship ${def.goal} contracts. Finish with 45+ reputation, nonnegative cash, and no unfinished work.` : 'Build, experiment, and find your own rhythm.'}</p><div class="goal-label"><span>${def.goal ? 'CAMPAIGN PROGRESS' : 'CONTRACTS DELIVERED'}</span><strong>${s.delivered}${def.goal ? ` / ${def.goal}` : ''}</strong></div><div class="bar goal-bar"><i style="width:${goalProgress(s) * 100}%"></i></div><div class="debt-row"><span>Code cleanup needed</span><strong class="${s.debt > 40 ? 'warning-text' : ''}">${Math.round(s.debt)}%</strong></div><div class="bar thin"><i style="width:${s.debt}%;background:#d5a4d1"></i></div><p class="tiny-note">Debt slows build work. Maintain idle stations to bring it down.</p>${pts ? `<svg viewBox="0 0 220 45" class="cash-chart" role="img" aria-label="Daily cash trend"><polyline points="${pts}" fill="none" stroke="#9bbf88" stroke-width="2"/></svg>` : ''}<button class="text-btn" data-action="report">View factory report ${icon('arrow', 14)}</button></div>`;
 }
-const TUTORIAL = [
-  [
-    'A little factory, ready to go.',
-    'Your four stations already have crew. Accept a contract in the inbox to give them something to build.',
-  ],
-  [
-    'Let the first shift begin.',
-    'Press Start shift or Space. Work travels through Discover, Build, Review, and Ship automatically. N advances one hour while paused.',
-  ],
-  [
-    'Read the queues.',
-    'The strip below the floor shows working and waiting jobs. A growing queue tells you where an extra station or upgrade will help.',
-  ],
-  [
-    'People make the machines work.',
-    'Select a station to inspect it. Hire crew, then assign them to a new workstation. Staff can only switch stations when idle.',
-  ],
-  [
-    'Fast is a choice. So is careful.',
-    'Rush build makes work faster but creates more defects and debt. Thorough review catches mistakes before customers do.',
-  ],
-  [
-    'Build a business that lasts.',
-    'Deliver six contracts in 30 days, keep reputation at 45+, and finish with positive cash and no unfinished work. Your progress saves automatically.',
-  ],
-];
 function renderTutorial() {
+  const guide = mode
+    ? {
+        title: 'Choose an empty tile.',
+        text: 'Highlighted tiles are available. Press Escape to cancel.',
+      }
+    : nextStep(s, running);
   replace(
     'tutorial',
-    tutorial
-      ? `<div class="tutorial-card"><span class="tutorial-number">${tutorialStep + 1}<small>/${TUTORIAL.length}</small></span><div><strong>${TUTORIAL[tutorialStep][0]}</strong><p>${TUTORIAL[tutorialStep][1]}</p></div><button class="button small" data-action="tutorial-next">${tutorialStep === TUTORIAL.length - 1 ? 'Got it' : 'Next'} ${icon('arrow', 14)}</button><button class="icon-btn" data-action="tutorial-skip" aria-label="Dismiss tutorial">${icon('x', 15)}</button></div>`
-      : '',
+    `<div class="next-step"><span class="eyebrow">WHAT TO DO NEXT</span><h2>${guide.title}</h2><p>${guide.text}</p>${guide.action ? `<button class="button primary" data-action="${guide.action}" data-focus="guide-action">${guide.label}</button>` : '<span class="working-hint">You can leave the team working or press Pause.</span>'}</div>`,
   );
 }
 function startDialog() {
@@ -375,7 +366,7 @@ function startDialog() {
   render();
   showDialog(
     'start',
-    `<div class="welcome-art"><span class="welcome-stamp">INDEPENDENT SOFTWARE. INDUSTRIAL AMBITION.</span><div class="hero-factory">${icon('factory', 80)}</div><span class="hero-crate crate-a">SPEC</span><span class="hero-crate crate-b">BUILD</span><span class="hero-crate crate-c">SHIP</span><div class="welcome-title"><span class="eyebrow">A SMALL TEAM. AN UNREASONABLE DEADLINE.</span><h2 id="dialog-title">Make good things.<br><em>Then ship them.</em></h2><p>A cozy strategy game about the messy business of making software.</p></div></div><div class="welcome-body">${started ? closeButton() : ''}<div class="welcome-intro"><h3>Choose your next chapter.</h3><p>Build your floor. Find your flow. Keep the lights on.</p></div><div class="scenario-options">${Object.entries(
+    `<div class="welcome-art"><span class="welcome-stamp">YOUR TEAM IS READY.</span><div class="hero-factory">${icon('factory', 80)}</div><span class="hero-crate crate-a">SPEC</span><span class="hero-crate crate-b">BUILD</span><span class="hero-crate crate-c">SHIP</span><div class="welcome-title"><span class="eyebrow">A SMALL TEAM. AN UNREASONABLE DEADLINE.</span><h2 id="dialog-title">Run a tiny<br><em>software factory.</em></h2><p>Pick jobs. Let your team build them. Get paid when they ship.</p></div></div><div class="welcome-body">${started ? closeButton() : ''}<ol class="quick-start"><li><b>1</b><span>Pick a job</span></li><li><b>2</b><span>Press Play</span></li><li><b>3</b><span>Get paid</span></li></ol><p class="start-summary" id="start-summary">${SCENARIOS[startScenario].name} · ${STUDIOS[startStudio].name} · ${SCENARIOS[startScenario].goal ? `Ship ${SCENARIOS[startScenario].goal} jobs in ${SCENARIOS[startScenario].days} days.` : 'No deadline.'}</p><div class="start-buttons"><button class="button primary large" data-action="start">${saved ? 'Start fresh' : 'Start playing'} ${icon('arrow', 19)}</button>${saved ? '<button class="button secondary large" data-action="continue">Continue my factory</button>' : ''}</div><details class="start-options"><summary>Change game options</summary><div class="scenario-options">${Object.entries(
       SCENARIOS,
     )
       .map(
@@ -384,7 +375,7 @@ function startDialog() {
       )
       .join(
         '',
-      )}</div>${studioChoices(startStudio)}<label class="field-label" for="seed-input">CHALLENGE SEED <span>Same seed + studio + choices = same run</span></label><div class="seed-row"><input id="seed-input" maxlength="32" value="${esc(params.get('seed') || s.seed)}" spellcheck="false" autocomplete="off"/><button class="button secondary" data-action="random-seed" aria-label="Generate a new challenge seed">Shuffle</button></div><div class="start-buttons"><button class="button primary large" data-action="start">Start a new factory ${icon('arrow', 19)}</button>${saved ? '<button class="button secondary large" data-action="continue">Continue saved factory</button>' : ''}</div><p class="welcome-foot">Free to play. Runs on your device. No accounts, real agents, or purchases.</p>${saved ? '<p class="tiny-note">Starting a new factory replaces the local autosave. Export it from the menu first if you want to keep it.</p>' : ''}${storageWarning ? '<p class="warning-text">A previous save could not be loaded, or storage is unavailable. Use exported saves to keep your progress.</p>' : ''}</div>`,
+      )}</div>${studioChoices(startStudio)}<label class="field-label" for="seed-input">CHALLENGE SEED <span>Same seed + studio + choices = same run</span></label><div class="seed-row"><input id="seed-input" maxlength="32" value="${esc(params.get('seed') || s.seed)}" spellcheck="false" autocomplete="off"/><button class="button secondary" data-action="random-seed" aria-label="Generate a new challenge seed">Shuffle</button></div></details><p class="welcome-foot">Free to play. Runs on your device. No accounts, real agents, or purchases.</p>${saved ? '<p class="tiny-note">Starting a new factory replaces the local autosave. Export it from the menu first if you want to keep it.</p>' : ''}${storageWarning ? '<p class="warning-text">A previous save could not be loaded, or storage is unavailable. Use exported saves to keep your progress.</p>' : ''}</div>`,
   );
 }
 function buildDialog() {
@@ -458,7 +449,7 @@ function menuDialog() {
   render();
   showDialog(
     'menu',
-    `${closeButton()}<span class="eyebrow">TAKE A BREATHER</span><h2 id="dialog-title">The workshop menu.</h2><div class="menu-grid"><button class="button secondary" data-action="export">${icon('download')} Export save</button><button class="button secondary" data-action="import">Import save</button><button class="button secondary" data-action="share">Share challenge</button><button class="button secondary" data-action="report">Factory report</button><button class="button secondary" data-action="help">How to play</button><button class="button secondary" data-action="new">New factory</button></div><div class="settings-row"><label for="sound-setting">Sound effects <small>Quiet feedback for actions and deliveries</small></label><input id="sound-setting" type="checkbox" data-setting="sound" ${settings.sound ? 'checked' : ''}/></div><div class="settings-row"><label for="motion-setting">Animated workshop <small>Switch off for reduced motion</small></label><input id="motion-setting" type="checkbox" data-setting="motion" ${settings.motion ? 'checked' : ''}/></div><p class="tiny-note">Autosaves stay in this browser. Export a save to move devices or keep multiple factories. Opening menus pauses the shift.</p><div class="about-line"><strong>Ship It! · v1.1.0</strong><span>Made for people who make things.</span></div>`,
+    `${closeButton()}<span class="eyebrow">TAKE A BREATHER</span><h2 id="dialog-title">The workshop menu.</h2><div class="menu-grid"><button class="button secondary" data-action="export">${icon('download')} Export save</button><button class="button secondary" data-action="import">Import save</button><button class="button secondary" data-action="share">Share challenge</button><button class="button secondary" data-action="report">Factory report</button><button class="button secondary" data-action="help">How to play</button><button class="button secondary" data-action="new">New factory</button></div><div class="settings-row"><label for="sound-setting">Sound effects <small>Quiet feedback for actions and deliveries</small></label><input id="sound-setting" type="checkbox" data-setting="sound" ${settings.sound ? 'checked' : ''}/></div><div class="settings-row"><label for="motion-setting">Animated workshop <small>Switch off for reduced motion</small></label><input id="motion-setting" type="checkbox" data-setting="motion" ${settings.motion ? 'checked' : ''}/></div><p class="tiny-note">Autosaves stay in this browser. Export a save to move devices or keep multiple factories. Opening menus pauses the shift.</p><div class="about-line"><strong>Ship It! · v1.2.0</strong><span>Made for people who make things.</span></div>`,
   );
 }
 function helpDialog() {
@@ -466,7 +457,7 @@ function helpDialog() {
   render();
   showDialog(
     'help',
-    `${closeButton()}<span class="eyebrow">THE OWNER’S MANUAL</span><h2 id="dialog-title">Find your factory’s rhythm.</h2><p class="dialog-lede">Accept a contract, start the shift, and turn a client’s idea into a shipped product.</p><div class="help-flow">${STAGES.map((type) => `<div style="--stage:${STATIONS[type].color}"><strong>${STATIONS[type].short}</strong><p>${STATIONS[type].description}</p></div>`).join('')}</div><div class="help-grid"><section><h3>Find your studio style</h3><p>Bootstrappers save 15% on crew wages. Craft Club discovers 15% faster and adds 4 percentage points to review detection, capped at 99%. Night Owls ship 25% faster and move packages four tiles per hour.</p></section><section><h3>Keep the streak alive</h3><p>Consecutive on-time deliveries earn $50 more bonus each time, up to $200 per delivery. Late deliveries and warranty claims reset the streak. An $80 coffee run boosts throughput 35% for four working hours, with 16 hours between runs.</p></section><section><h3>Grow at the bottleneck</h3><p>Watch the waiting counts. Add a station where work piles up, hire a worker, and assign them. A workstation without crew does no work.</p></section><section><h3>Keep the lights on</h3><p>Payroll, $25 rent, and $4 per station are charged every eight hours. Contracts pay on delivery. Late deliveries lose 30% of their fee and 4 reputation.</p></section><section><h3>Quality comes back around</h3><p>Review may send defects back for a smaller build. Escaped bugs return after 12 hours, cost $180 and 12 reputation, and create unpaid repair work.</p></section><section><h3>Take care of the machines</h3><p>Wear reduces throughput. Technical debt slows build work. Maintaining an idle station takes four hours, costs $100, resets its wear, and removes 10 debt.</p></section><section><h3>Finish strong</h3><p>Campaigns require the delivery goal, at least 45 reputation, nonnegative cash, and no active contracts or pending warranty claims. A cash balance below −$500 ends a campaign. Sandbox has no end condition.</p></section><section><h3>Take your time</h3><p>Pause whenever you like. Menus and crew decisions pause the simulation. Hidden tabs pause too. Use 1×, 2×, or 4× speed when the floor is flowing.</p></section></div><div class="keyboard-guide"><span><kbd>SPACE</kbd> play / pause</span><span><kbd>N</kbd> one hour</span><span><kbd>B</kbd> build</span><span><kbd>ESC</kbd> cancel / close</span></div><div class="dialog-actions"><button class="button primary" data-action="tutorial">Walk me through it</button><button class="button secondary" data-action="close">Back to the factory</button></div><p class="tiny-note">All businesses and events are fictional. Agent behavior is a game model; no AI service, payment, or real infrastructure is connected.</p>`,
+    `${closeButton()}<span class="eyebrow">HOW TO PLAY</span><h2 id="dialog-title">Three steps. One little factory.</h2><ol class="simple-help"><li><h3>Pick a job</h3><p>Open New jobs and press Accept job. Your starting team is already assigned.</p></li><li><h3>Press Play</h3><p>Your team plans, builds, checks, and ships automatically. Pause whenever you want.</p></li><li><h3>Get paid, then repeat</h3><p>Money arrives when the job ships. Your team is paid every game day, so keep work moving.</p></li></ol><p class="dialog-lede">${SCENARIOS[s.scenario].goal ? `Win by shipping ${SCENARIOS[s.scenario].goal} jobs within ${SCENARIOS[s.scenario].days} days. Finish with at least $0, 45 reputation, and no unfinished jobs or repairs.` : 'This is a sandbox. There is no deadline or game-over condition.'}</p><details class="extra-help"><summary>When you want more control</summary><p>Use More controls to hire people, add stations, choose work policies, buy coffee, and see trophies. Select a station to manage it. A new station needs a worker.</p><p>Late jobs pay less. Bugs that reach customers return as unpaid repairs. Maintaining idle stations removes wear and some code cleanup work.</p><p>Space plays or pauses. N advances one hour. B opens the station catalog. The menu contains saves, sharing, and sound settings.</p></details><div class="dialog-actions"><button class="button primary" data-action="close">Got it</button></div>`,
   );
 }
 function download() {
@@ -508,8 +499,13 @@ function doAction(action, quiet = false) {
 }
 function advance(hours = 1) {
   const delivered = s.delivered,
-    escaped = s.escaped;
+    escaped = s.escaped,
+    hadWork = s.jobs.length + s.warranty.length > 0;
   tick(s, hours);
+  if (hadWork && !s.jobs.length && !s.warranty.length) {
+    running = false;
+    tab = 'inbox';
+  }
   persist();
   render();
   if (s.delivered > delivered) {
@@ -548,7 +544,22 @@ document.addEventListener('click', async (e) => {
   } else if (a === 'tab') {
     tab = el.dataset.tab;
     render();
+  } else if (a === 'controls' || a === 'manage') {
+    settings.detailed = a === 'manage' || !settings.detailed;
+    mode = null;
+    settingSave();
+    render();
+  } else if (a === 'browse') {
+    tab = 'inbox';
+    render();
+    $('#contracts').scrollIntoView({
+      block: 'center',
+      behavior: settings.motion ? 'smooth' : 'instant',
+    });
+    $('#contracts button')?.focus({ preventScroll: true });
   } else if (a === 'station') {
+    settings.detailed = true;
+    settingSave();
     selected = el.dataset.id;
     mode = null;
     render();
@@ -642,12 +653,16 @@ document.addEventListener('click', async (e) => {
       b.classList.toggle('chosen', chosen);
       b.setAttribute('aria-pressed', String(chosen));
     });
+    $('#start-summary').textContent =
+      `${SCENARIOS[startScenario].name} · ${STUDIOS[startStudio].name}`;
   } else if (a === 'studio') {
     startStudio = el.dataset.studio;
     document.querySelectorAll('.studio-choice').forEach((b) => {
       b.classList.toggle('chosen', b.dataset.studio === startStudio);
       b.setAttribute('aria-pressed', String(b.dataset.studio === startStudio));
     });
+    $('#start-summary').textContent =
+      `${SCENARIOS[startScenario].name} · ${STUDIOS[startStudio].name}`;
   } else if (a === 'random-seed') {
     const bytes = new Uint32Array(1);
     crypto.getRandomValues(bytes);
@@ -658,8 +673,6 @@ document.addEventListener('click', async (e) => {
     tab = 'inbox';
     mode = null;
     started = true;
-    tutorial = s.scenario === 'garage';
-    tutorialStep = 0;
     closeDialog();
     persist();
     render();
@@ -676,18 +689,7 @@ document.addEventListener('click', async (e) => {
   } else if (a === 'export') download();
   else if (a === 'import') $('#import-file').click();
   else if (a === 'share') await share();
-  else if (a === 'tutorial') {
-    closeDialog();
-    tutorial = true;
-    tutorialStep = 0;
-    render();
-  } else if (a === 'tutorial-next') {
-    if (++tutorialStep >= TUTORIAL.length) tutorial = false;
-    render();
-  } else if (a === 'tutorial-skip') {
-    tutorial = false;
-    render();
-  } else if (a === 'sound') {
+  else if (a === 'sound') {
     settings.sound = !settings.sound;
     settingSave();
     if (settings.sound) beep();

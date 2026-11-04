@@ -63,7 +63,7 @@ export const STAGES = ['spec', 'build', 'review', 'ship'];
 export const STATIONS = {
   spec: {
     name: 'Discovery desk',
-    short: 'Discover',
+    short: 'Plan',
     label: 'SPEC',
     color: '#b9a0ff',
     cost: 350,
@@ -79,7 +79,7 @@ export const STATIONS = {
   },
   review: {
     name: 'Quality lab',
-    short: 'Review',
+    short: 'Check',
     label: 'QA',
     color: '#ffc974',
     cost: 400,

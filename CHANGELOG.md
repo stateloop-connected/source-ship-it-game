@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0 — A simpler start
+
+- Start playing with one button; studio, scenario, and seed choices are optional.
+- A simple default view shows jobs, the factory, and the next action.
+- Live guidance replaces the six-page tutorial.
+- More controls reveals management tools, coffee, streaks, and trophies.
+- Clear Play/Pause buttons and Plan → Build → Check → Ship labels.
+- Time pauses after the last delivery when no customer checks are pending.
+- Shorter help, player guide, and README. Existing saves remain compatible.
+
 ## 1.1.0 — The Good Work update
 
 - Three studio specialties: Bootstrappers, Craft Club, and Night Owls.
