@@ -1,4 +1,62 @@
-export const VERSION = 1;
+export const VERSION = 2;
+export const STUDIOS = {
+  lean: {
+    name: 'Bootstrappers',
+    symbol: '$',
+    color: '#b8f27c',
+    motto: 'Small budget. Unreasonable ambition.',
+    benefit: '15% lower crew wages.',
+    description: 'Keep a longer runway and invest the savings in your next workstation.',
+  },
+  craft: {
+    name: 'Craft Club',
+    symbol: '✓',
+    color: '#b9a0ff',
+    motto: 'Ship something you would use.',
+    benefit: '15% faster discovery. +4 points to defect detection.',
+    description: 'A little more care at the start. A few fewer surprises at the end.',
+  },
+  express: {
+    name: 'Night Owls',
+    symbol: '↗',
+    color: '#ffc974',
+    motto: 'One more release before sunrise.',
+    benefit: '25% faster shipping. Packages travel 4 tiles/hour.',
+    description: 'Keep your releases moving and protect that on-time streak.',
+  },
+  classic: {
+    name: 'Original crew',
+    symbol: '·',
+    color: '#79c9ff',
+    motto: 'The garage that started it all.',
+    benefit: 'Original v1.0 work rates.',
+    description: 'Preserved for imported factories and classic challenges.',
+  },
+};
+export const BADGES = {
+  first: { name: 'Hello, world!', symbol: '01', description: 'Deliver your first paid contract.' },
+  streak: {
+    name: 'On a roll',
+    symbol: '3×',
+    description: 'Ship three contracts on time in a row.',
+  },
+  bugs: {
+    name: 'Bug whisperer',
+    symbol: '{}',
+    description: 'Catch three defects before they reach customers.',
+  },
+  grow: {
+    name: 'Need a bigger garage',
+    symbol: '06',
+    description: 'Operate six workstations at once.',
+  },
+  tidy: {
+    name: 'Clean slate',
+    symbol: '0%',
+    description: 'Clear remaining technical debt with maintenance.',
+  },
+  finish: { name: 'Open for business', symbol: '★', description: 'Win a campaign.' },
+};
 export const HOURS_PER_DAY = 8;
 export const GRID = { cols: 7, rows: 5 };
 export const STAGES = ['spec', 'build', 'review', 'ship'];

@@ -59,3 +59,13 @@ Opening menus pauses the game. Closing them leaves it paused, except resolving a
 The autosave stays on this device and browser origin. Localhost and GitHub Pages have separate saves. Export from the menu and import on the destination to transfer a factory.
 
 Import validates the complete state before replacing your current run. Invalid files leave the current run untouched. Save files must be smaller than 500 KB and use the supported version. A seed link creates a new starting challenge; it does not contain the sender's progress.
+
+## Give the studio a personality
+
+Choose Bootstrappers for lower payroll, Craft Club for better discovery and review, or Night Owls for faster releases. Studio choice is included in challenge links. Try the same seed with each specialty to compare your decisions.
+
+The momentum bar above the floor tracks consecutive on-time deliveries. Starting with the second, each adds a bonus: $50, $100, $150, then $200 per delivery. A late delivery or arriving warranty claim resets the streak. Repairs never count as new paid deliveries.
+
+**Coffee run** costs $80, boosts throughput by 35% for the next four working hours, and has a 16-hour interval between purchases. Trigger it when crew are processing work, not waiting for packages. Pausing preserves the remaining time.
+
+Select the **star** to open the trophy shelf. Each run has six achievements; an earned trophy remains even if a later mistake breaks your streak. Exporting a save includes its trophies. Version-1 saves import into the Original crew specialty, preserving their factory and starting a fresh trophy collection.

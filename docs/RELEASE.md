@@ -12,7 +12,9 @@
 
 Use the production build with `npm run preview`, not only the development server.
 
-- New run, scenario selection, seed entry, and saved-run continuation.
+- New run, scenario and studio selection, seed entry, and saved-run continuation.
+- Studio perks, coffee purchase/cooldown, streak bonuses, trophy shelf, and delivery celebrations.
+- Import a version-1 save and verify preserved factory state plus Original crew specialty.
 - Accept contracts and complete a real delivery through the UI.
 - Place a station, hire crew, assign them, upgrade, adjust policy, move, maintain, and sell an extra idle station.
 - Pause, step, speed changes, keyboard controls, and event decisions.

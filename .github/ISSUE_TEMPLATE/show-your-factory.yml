@@ -1,0 +1,38 @@
+name: Show your factory
+description: Share a great run, a spectacular failure, or a layout worth stealing.
+title: '[Factory] '
+body:
+  - type: markdown
+    attributes:
+      value: 'Good work deserves an audience. Share your run! Scores are friendly, local, and unverified.'
+  - type: input
+    id: challenge
+    attributes:
+      label: Challenge link or seed
+      description: Use Share challenge in the game menu.
+      placeholder: GOOD-WORK
+    validations:
+      required: true
+  - type: dropdown
+    id: studio
+    attributes:
+      label: Studio
+      options:
+        - Bootstrappers
+        - Craft Club
+        - Night Owls
+        - Original crew
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Game version and scenario
+      placeholder: '1.1.0 / Garage days'
+  - type: textarea
+    id: story
+    attributes:
+      label: Tell us what happened
+      description: Best streak, trophies, cash, the decision that saved the factory, or the bug that ended it. Drop a screenshot of your report here.
+    validations:
+      required: true

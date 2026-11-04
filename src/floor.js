@@ -1,5 +1,5 @@
 import { STATIONS, CONTRACTS, GRID } from './data.js';
-import { stationSpeed } from './engine.js';
+import { stationSpeed, transportHours } from './engine.js';
 
 export const esc = (v) =>
   String(v).replace(
@@ -71,7 +71,7 @@ export function renderFloor(s, selected, mode, speed = 1) {
     if (!job) continue;
     const [x0, y0] = job.lastCell;
     const distance = Math.abs(x0 - st.x) + Math.abs(y0 - st.y);
-    const duration = Math.max(1, Math.ceil(distance / 3));
+    const duration = transportHours(s, distance);
     const progress = Math.max(0, 1 - (job.readyAt - s.clock) / duration);
     const position = (fraction) => {
       const along = Math.min(distance, fraction * distance);

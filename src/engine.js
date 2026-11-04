@@ -9,6 +9,8 @@ import {
   CONTRACTS,
   NAMES,
   EVENTS,
+  STUDIOS,
+  BADGES,
 } from './data.js';
 
 export const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
@@ -52,14 +54,22 @@ function station(id, type, x, y, worker) {
     processed: 0,
   };
 }
-export function newGame(seed = 'HELLO-WORLD', scenario = 'garage') {
+export function newGame(seed = 'HELLO-WORLD', scenario = 'garage', studio = 'lean') {
   seed = String(seed).trim().slice(0, 32) || 'HELLO-WORLD';
   if (!Object.hasOwn(SCENARIOS, scenario)) scenario = 'garage';
+  if (!Object.hasOwn(STUDIOS, studio)) studio = 'lean';
   const settings = SCENARIOS[scenario];
   const s = {
     version: VERSION,
     seed,
     scenario,
+    studio,
+    streak: 0,
+    bestStreak: 0,
+    comboBonus: 0,
+    boostUntil: 0,
+    boostReadyAt: 0,
+    badges: [],
     rng: seedNumber(seed),
     clock: 0,
     cash: settings.cash,
@@ -117,7 +127,20 @@ function refillOffers(s) {
 }
 export const activeJobs = (s) => s.jobs.filter((j) => j.status !== 'done');
 export const wages = (s) =>
-  s.workers.reduce((total, w) => total + WORKERS[w.type].wage, 0) + 25 + s.stations.length * 4;
+  Math.ceil(
+    s.workers.reduce((total, w) => total + WORKERS[w.type].wage, 0) *
+      (s.studio === 'lean' ? 0.85 : 1),
+  ) +
+  25 +
+  s.stations.length * 4;
+export const transportHours = (s, distance) =>
+  Math.max(1, Math.ceil(distance / (s.studio === 'express' ? 4 : 3)));
+function unlock(s, badge) {
+  if (!s.badges.includes(badge)) {
+    s.badges.push(badge);
+    log(s, `Trophy unlocked: ${BADGES[badge].name}`, 'good');
+  }
+}
 export function queueFor(s, type) {
   return s.jobs.filter((j) => j.status === 'queued' && j.stage === type);
 }
@@ -129,6 +152,9 @@ export function stationSpeed(s, st) {
   if (!worker || st.maintenance > 0 || (worker.type === 'agent' && s.clock < s.outageUntil))
     return 0;
   let speed = WORKERS[worker.type].speed * (1 + (st.level - 1) * 0.35);
+  if (s.clock < s.boostUntil) speed *= 1.35;
+  if (s.studio === 'craft' && st.type === 'spec') speed *= 1.15;
+  if (s.studio === 'express' && st.type === 'ship') speed *= 1.25;
   if (worker.type === 'specialist' && st.type === 'review') speed *= 1.65;
   if (worker.type === 'maker' && (st.type === 'spec' || st.type === 'ship')) speed *= 1.2;
   if (st.type === 'build') speed *= (st.policy === 'rush' ? 1.55 : 1) * (1 - s.debt / 160);
@@ -154,6 +180,23 @@ export function act(s, action) {
   if (s.event && action.type !== 'event')
     return result(false, 'Resolve the crew decision before changing the factory.');
   switch (action.type) {
+    case 'coffee': {
+      if (s.clock < s.boostReadyAt)
+        return result(
+          false,
+          `The next coffee run is ready in ${s.boostReadyAt - s.clock} working hours.`,
+        );
+      if (s.cash < 80) return result(false, 'The coffee run costs $80.');
+      pay(s, 80);
+      s.boostUntil = s.clock + 5;
+      s.boostReadyAt = s.clock + 16;
+      log(
+        s,
+        'Coffee acquired. Even Patch asked for an espresso. +35% throughput for the next 4 work ticks.',
+        'good',
+      );
+      return result(true, 'Coffee run! +35% throughput for the next 4 work ticks.');
+    }
     case 'accept': {
       const offer = s.offers.find((x) => x.id === action.id);
       if (!offer) return result(false, 'That contract is no longer available.');
@@ -192,6 +235,7 @@ export function act(s, action) {
         return result(false, `You need ${money(def.cost)} for that workstation.`);
       pay(s, def.cost);
       s.stations.push(station(`s${s.nextId++}`, action.station, action.x, action.y, null));
+      if (s.stations.length >= 6) unlock(s, 'grow');
       log(s, `${def.name} installed. Assign a crew member to bring it online.`);
       return result(true, 'Workstation installed. Select it to assign crew.');
     }
@@ -371,7 +415,9 @@ function complete(s, st, j) {
     enqueue(s, j, 'review', st);
   } else if (st.type === 'review') {
     const chance = clamp(
-      (st.policy === 'thorough' ? 0.92 : 0.58) + (worker.type === 'specialist' ? 0.07 : 0),
+      (st.policy === 'thorough' ? 0.92 : 0.58) +
+        (worker.type === 'specialist' ? 0.07 : 0) +
+        (s.studio === 'craft' ? 0.04 : 0),
       0,
       0.99,
     );
@@ -379,6 +425,7 @@ function complete(s, st, j) {
       j.defects = 0;
       j.reworks++;
       s.caught++;
+      if (s.caught >= 3) unlock(s, 'bugs');
       log(s, `${def.name}: review caught a defect. A smaller repair returns to build.`, 'warn');
       enqueue(s, j, 'build', st, true);
     } else enqueue(s, j, 'ship', st);
@@ -388,10 +435,16 @@ function complete(s, st, j) {
       log(s, `${def.name}: warranty repair delivered. Trust is recovering.`, 'good');
     } else {
       const late = s.clock > j.deadline;
-      const payout = Math.floor(j.reward * (late ? 0.7 : 1));
+      s.streak = late ? 0 : s.streak + 1;
+      s.bestStreak = Math.max(s.bestStreak, s.streak);
+      const bonus = late ? 0 : Math.min(Math.max(0, s.streak - 1), 4) * 50;
+      const payout = Math.floor(j.reward * (late ? 0.7 : 1)) + bonus;
+      s.comboBonus += bonus;
       s.cash += payout;
       s.earned += payout;
       s.delivered++;
+      unlock(s, 'first');
+      if (s.streak >= 3) unlock(s, 'streak');
       s.reputation = clamp(s.reputation + (late ? -4 : 6), 0, 100);
       if (late) s.stats.late++;
       s.history.unshift({
@@ -404,7 +457,7 @@ function complete(s, st, j) {
       s.history = s.history.slice(0, 100);
       log(
         s,
-        `${def.name} shipped! ${money(payout)} received${late ? ' (late delivery deduction)' : ''}.`,
+        `${def.name} shipped! ${money(payout)} received${late ? ' (late delivery deduction)' : bonus ? ` · ${money(bonus)} streak bonus` : ''}.`,
         'good',
       );
       if (j.defects) s.warranty.push({ template: j.template, due: s.clock + 12, origin: j.id });
@@ -419,6 +472,7 @@ export function tick(s, count = 1) {
     for (const repair of s.warranty.filter((w) => w.due <= s.clock)) {
       pay(s, 180);
       s.escaped++;
+      s.streak = 0;
       s.reputation = clamp(s.reputation - 12, 0, 100);
       s.jobs.push({
         id: `j${s.nextId++}`,
@@ -448,7 +502,9 @@ export function tick(s, count = 1) {
         st.maintenance--;
         if (st.maintenance === 0) {
           st.wear = 0;
+          const priorDebt = s.debt;
           s.debt = Math.max(0, s.debt - 10);
+          if (priorDebt > 0 && s.debt === 0) unlock(s, 'tidy');
           log(s, `${STATIONS[st.type].name} maintained. 10 debt removed.`, 'good');
         }
         continue;
@@ -464,7 +520,7 @@ export function tick(s, count = 1) {
           st.busy = job.id;
           job.status = 'working';
           const distance = Math.abs(job.lastCell[0] - st.x) + Math.abs(job.lastCell[1] - st.y);
-          job.readyAt = s.clock + Math.max(1, Math.ceil(distance / 3));
+          job.readyAt = s.clock + transportHours(s, distance);
         }
       }
       const job = s.jobs.find((j) => j.id === st.busy);
@@ -504,6 +560,7 @@ export function tick(s, count = 1) {
       log(s, 'The runway ran out. Your next factory starts with everything you learned.', 'bad');
     } else if (accomplished) {
       s.status = 'won';
+      unlock(s, 'finish');
       log(s, 'A factory worth believing in. Campaign complete!', 'good');
     } else if (settings.days && s.clock >= settings.days * 8) {
       s.status = 'lost';
@@ -537,16 +594,44 @@ export function validateSave(input) {
   if (
     !input ||
     typeof input !== 'object' ||
-    input.version !== VERSION ||
+    ![1, VERSION].includes(input.version) ||
     !Object.hasOwn(SCENARIOS, input.scenario)
   )
     fail();
   const s = copy(input);
+  if (s.version === 1) {
+    Object.assign(s, {
+      version: VERSION,
+      studio: 'classic',
+      streak: 0,
+      bestStreak: 0,
+      comboBonus: 0,
+      boostUntil: 0,
+      boostReadyAt: 0,
+      badges: [],
+    });
+  }
   const num = (v, lo = 0, hi = 1e9) =>
     typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi;
   const str = (v, max = 100) => typeof v === 'string' && v.length <= max;
   const id = (v, prefix) =>
     typeof v === 'string' && new RegExp(`^[${prefix}][1-9][0-9]{0,8}$`).test(v);
+  if (
+    !Object.hasOwn(STUDIOS, s.studio) ||
+    !Array.isArray(s.badges) ||
+    s.badges.length > Object.keys(BADGES).length ||
+    new Set(s.badges).size !== s.badges.length ||
+    s.badges.some((b) => !Object.hasOwn(BADGES, b))
+  )
+    fail();
+  for (const key of ['streak', 'bestStreak', 'comboBonus', 'boostUntil', 'boostReadyAt'])
+    if (!num(s[key]) || !Number.isInteger(s[key])) fail();
+  if (
+    s.streak > s.bestStreak ||
+    s.bestStreak > s.delivered ||
+    (s.boostUntil && s.boostUntil > s.boostReadyAt)
+  )
+    fail();
   if (
     !str(s.seed, 32) ||
     !num(s.rng, 1, 4294967295) ||

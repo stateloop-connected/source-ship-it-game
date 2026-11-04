@@ -1,4 +1,4 @@
-# Simulation model, version 1
+# Simulation model, version 2
 
 This is an intentionally small, fictional model. Worker types and numerical reliability values are game balancing parameters, not measurements of real developers or AI systems.
 
@@ -10,7 +10,7 @@ One tick is one working hour. A day contains eight ticks. At each tick, the engi
 
 ## Dispatch and transport
 
-Jobs move through `spec`, `build`, `review`, and `ship`. A staffed idle station selects a queued job of its type: warranty jobs first, then the earliest deadline. It reserves that job while it travels. Transport takes `max(1, ceil(Manhattan distance / 3))` hours. Initial packages enter at tile `(0, 1)`.
+Jobs move through `spec`, `build`, `review`, and `ship`. A staffed idle station selects a queued job of its type: warranty jobs first, then the earliest deadline. It reserves that job while it travels. Transport takes `max(1, ceil(Manhattan distance / 3))` hours, or distance divided by 4 for Night Owls. Initial packages enter at tile `(0, 1)`.
 
 A completed stage becomes eligible at the next tick. Processing begins when its transit deadline arrives. A busy station cannot be moved or have its worker or policy changed. Station insertion order resolves ties deterministically.
 
@@ -28,15 +28,15 @@ clamp(1 − worker reliability + ambiguity + debt / 250 + rush penalty, 0.02, 0.
 
 Reliability is 0.90 for developers, 0.67 for agents, and 0.97 for QA engineers. Rush penalty is 0.22. Each completed balanced build adds 1.2 debt; a rush build adds 6. Debt is bounded to 0–100.
 
-Thorough review detects defects with 0.92 probability; quick review with 0.58. A QA engineer adds 0.07, capped at 0.99. Detected defects return to build with 45% of ordinary build effort. Subsequent review and shipping use normal effort. Rebuilds may introduce another defect.
+Thorough review detects defects with 0.92 probability; quick review with 0.58. A QA engineer adds 0.07; Craft Club adds 0.04. The combined chance is capped at 0.99. Detected defects return to build with 45% of ordinary build effort. Subsequent review and shipping use normal effort. Rebuilds may introduce another defect.
 
 The challenging scenario multiplies all ordinary stage effort and rebuild effort by 1.45. Warranty jobs start with five build units, then follow scenario-adjusted review and shipping. Once a warranty repair ships, it is considered resolved; it does not generate recursive warranty claims.
 
 ## Economy
 
-Daily costs are all worker wages plus $25 rent and $4 per workstation. There is no cost per model request and no actual provider connection. All money is simulated.
+Daily costs are all worker wages plus $25 rent and $4 per workstation. Bootstrappers multiply the total crew wages by 0.85, rounded up, before adding rent and station costs. There is no cost per model request and no actual provider connection. All money is simulated.
 
-On-time delivery pays the offered amount and adds 6 reputation. Late delivery pays 70%, rounded down, and removes 4 reputation. Cancellation costs $100 and 8 reputation. An escaped defect schedules one claim 12 hours later; the claim costs $180 and 12 reputation. Repair completion restores 3 reputation.
+On-time delivery pays the offered amount, adds 6 reputation, and increments the shipping streak. Its bonus is `min(max(streak - 1, 0), 4) × $50`. Late deliveries and arriving warranty claims reset the streak. Warranty repairs do not increment it. Late delivery pays 70%, rounded down, and removes 4 reputation. Cancellation costs $100 and 8 reputation. An escaped defect schedules one claim 12 hours later; the claim costs $180 and 12 reputation. Repair completion restores 3 reputation.
 
 Maintenance resets one station's wear and removes 10 global debt after four hours, for $100. Cleanup events may also reduce debt. New stations cost their catalog amount; selling returns half the base cost. Upgrades are not refunded.
 
@@ -53,3 +53,11 @@ Score is `max(0, round(deliveries × 1000 + reputation × 20 + cash × 0.2 − e
 Save files store all model state, including RNG, queued decisions, jobs in transit, costs, and bounded history. Validation checks version, primitive types, finite numeric ranges, integer grid coordinates, identifiers, collection bounds, unique assignments, required stages, and job/station references before installing imported state.
 
 Files may be user-edited. Validation preserves the program's structural invariants; it does not prove that money, scores, or outcomes were earned legitimately. Game text from imports is escaped before HTML rendering. This is a standalone static application, with no account or server-side data store.
+
+## Studio specialties, coffee, and trophies
+
+Craft Club adds a 1.15× discovery throughput multiplier. Night Owls add a 1.25× shipping multiplier. Bootstrappers receive the wage discount above. Imported version-1 factories use the Original crew with original work rates, plus the new optional coffee and streak rules. Migration preserves existing cash, crew, layout, jobs, and RNG state; it does not promise identical future outcomes across game versions.
+
+Coffee costs $80 and multiplies throughput by 1.35 during the next four processing ticks. It becomes available again 16 ticks after purchase. All clocks advance with simulation time, so pausing does not use the boost or shorten the cooldown. Buying during transit or an empty floor can waste the benefit.
+
+Six trophies are earned once per run. They record the first paid delivery, three consecutive on-time deliveries, three caught defects, owning six stations simultaneously, completing maintenance that reduces positive debt to zero, and winning a campaign. Trophies survive exports and imports, but are not shared across factories. Migrated saves start an empty collection.

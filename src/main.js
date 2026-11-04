@@ -16,6 +16,8 @@ import {
   importSave,
 } from './engine.js';
 import { renderFloor, esc } from './floor.js';
+import { STUDIOS } from './data.js';
+import { studioChoices, momentum, trophyCards, crewLine, celebrate } from './flair.js';
 
 const $ = (selector) => document.querySelector(selector);
 const SAVE_KEY = 'ship-it-save-v1';
@@ -36,7 +38,10 @@ try {
   /* optional settings */
 }
 const params = new URLSearchParams(location.search);
-let s = saved || newGame(params.get('seed') || 'HELLO-WORLD', params.get('scenario') || 'garage');
+let startStudio = Object.hasOwn(STUDIOS, params.get('studio')) ? params.get('studio') : 'lean';
+let s =
+  saved ||
+  newGame(params.get('seed') || 'HELLO-WORLD', params.get('scenario') || 'garage', startStudio);
 let running = false,
   speed = 1,
   selected = 's2',
@@ -153,7 +158,7 @@ const closeButton = () =>
   `<button class="icon-btn modal-close" data-action="close" aria-label="Close dialog">${icon('x')}</button>`;
 function shell() {
   $('#app').innerHTML =
-    `<header class="topbar"><a class="brand" href="#" data-action="brand" aria-label="Ship It! game menu"><span class="brand-mark">${icon('factory', 25)}</span><span>ship it<span class="brand-dot">!</span><small>THE SOFTWARE FACTORY GAME</small></span></a><div class="top-metrics" id="top-metrics"></div><div class="top-actions"><button class="icon-btn" data-action="sound" id="sound-toggle" aria-label="Toggle sound">${icon('sound')}</button><button class="icon-btn" data-action="help" aria-label="How to play">${icon('help')}</button><button class="icon-btn" data-action="menu" aria-label="Game menu">${icon('menu')}</button></div></header><main class="game-layout"><aside class="contracts-panel"><div class="panel-heading"><div><span class="eyebrow">YOUR NEXT BIG THING</span><h2>Work orders<span class="dot green"></span></h2></div>${icon('box', 23)}</div><div class="tabs" id="contract-tabs"></div><div id="contracts" class="contracts-content"></div><div class="panel-foot"><span class="dot green"></span> New opportunities every 2 days</div></aside><section class="center"><div class="floor-heading"><div><div class="eyebrow">OPERATIONS / <span id="scenario-label"></span></div><h1>Your little empire.</h1><p id="floor-subtitle">Good work starts with a good flow.</p></div><div class="view-toggle"><button data-action="view" data-view="floor" id="view-floor" aria-label="Show illustrated factory">${icon('factory', 17)} Floor</button><button data-action="view" data-view="list" id="view-list" aria-label="Show station list">${icon('menu', 17)} List</button></div></div><div id="tutorial"></div><div class="floor-wrap" id="factory" tabindex="-1"><div id="floor"></div><div id="placement-banner"></div><div class="floor-badge"><span class="live-dot"></span><span id="floor-status">SHIFT PAUSED</span></div></div><div id="pipeline" class="pipeline"></div><div class="build-toolbar"><div><span class="eyebrow">MAKE ROOM FOR WHAT’S NEXT</span><strong>Grow your workshop</strong></div><div class="build-actions"><button class="button secondary" data-action="crew">${icon('crew', 18)} Hire crew</button><button class="button primary" data-action="build-menu">${icon('plus', 18)} Build a station</button></div></div><section class="activity"><div class="section-heading"><h2>On the factory floor</h2><button class="text-btn" data-action="log">Full journal ${icon('arrow', 14)}</button></div><div id="activity"></div></section></section><aside class="inspector-panel"><div id="inspector"></div><div id="campaign"></div></aside></main><footer class="shiftbar"><div class="shift-info" id="shift-info"></div><div class="transport"><button class="button play-button" id="play-button" data-action="play" data-focus="play">${icon('play', 16)} Start shift</button><button class="icon-btn step-button" data-action="step" aria-label="Advance one working hour" title="Advance one hour (N)">${icon('arrow', 18)}</button><div class="speed-controls" role="group" aria-label="Simulation speed"><button data-action="speed" data-speed="1">1×</button><button data-action="speed" data-speed="2">2×</button><button data-action="speed" data-speed="4">4×</button></div></div><div class="save-status"><span class="dot green"></span><span id="save-label">Saved on this device</span><kbd>SPACE</kbd> pause</div></footer><input type="file" id="import-file" accept=".json,application/json" hidden />`;
+    `<header class="topbar"><a class="brand" href="#" data-action="brand" aria-label="Ship It! game menu"><span class="brand-mark">${icon('factory', 25)}</span><span>ship it<span class="brand-dot">!</span><small>THE SOFTWARE FACTORY GAME</small></span></a><div class="top-metrics" id="top-metrics"></div><div class="top-actions"><button class="icon-btn" data-action="sound" id="sound-toggle" aria-label="Toggle sound">${icon('sound')}</button><button class="icon-btn" data-action="help" aria-label="How to play">${icon('help')}</button><button class="icon-btn" data-action="menu" aria-label="Game menu">${icon('menu')}</button></div></header><main class="game-layout"><aside class="contracts-panel"><div class="panel-heading"><div><span class="eyebrow">YOUR NEXT BIG THING</span><h2>Work orders<span class="dot green"></span></h2></div>${icon('box', 23)}</div><div class="tabs" id="contract-tabs"></div><div id="contracts" class="contracts-content"></div><div class="panel-foot"><span class="dot green"></span> New opportunities every 2 days</div></aside><section class="center"><div class="floor-heading"><div><div class="eyebrow">OPERATIONS / <span id="scenario-label"></span></div><h1>Your little empire.</h1><p id="floor-subtitle">Good work starts with a good flow.</p></div><div class="view-toggle"><button data-action="view" data-view="floor" id="view-floor" aria-label="Show illustrated factory">${icon('factory', 17)} Floor</button><button data-action="view" data-view="list" id="view-list" aria-label="Show station list">${icon('menu', 17)} List</button></div></div><div id="momentum"></div><div id="tutorial"></div><div class="floor-wrap" id="factory" tabindex="-1"><div id="floor"></div><div id="placement-banner"></div><div class="floor-badge"><span class="live-dot"></span><span id="floor-status">SHIFT PAUSED</span></div></div><div id="pipeline" class="pipeline"></div><div class="build-toolbar"><div><span class="eyebrow">MAKE ROOM FOR WHAT’S NEXT</span><strong>Grow your workshop</strong></div><div class="build-actions"><button class="button secondary" data-action="crew">${icon('crew', 18)} Hire crew</button><button class="button primary" data-action="build-menu">${icon('plus', 18)} Build a station</button></div></div><section class="activity"><div class="section-heading"><h2>On the factory floor</h2><button class="text-btn" data-action="log">Full journal ${icon('arrow', 14)}</button></div><div id="activity"></div></section></section><aside class="inspector-panel"><div id="inspector"></div><div id="campaign"></div></aside></main><footer class="shiftbar"><div class="shift-info" id="shift-info"></div><div class="transport"><button class="button play-button" id="play-button" data-action="play" data-focus="play">${icon('play', 16)} Start shift</button><button class="icon-btn step-button" data-action="step" aria-label="Advance one working hour" title="Advance one hour (N)">${icon('arrow', 18)}</button><div class="speed-controls" role="group" aria-label="Simulation speed"><button data-action="speed" data-speed="1">1×</button><button data-action="speed" data-speed="2">2×</button><button data-action="speed" data-speed="4">4×</button></div></div><div class="save-status"><span class="dot green"></span><span id="save-label">Saved on this device</span><kbd>SPACE</kbd> pause</div></footer><input type="file" id="import-file" accept=".json,application/json" hidden />`;
   render();
 }
 function replace(id, html) {
@@ -184,7 +189,7 @@ function render() {
     ? 'Choose a highlighted tile. Escape cancels placement.'
     : s.event
       ? 'Your crew needs a decision before work continues.'
-      : 'Good work starts with a good flow.';
+      : crewLine(s);
   $('#view-floor').classList.toggle('active', floorView === 'floor');
   $('#view-list').classList.toggle('active', floorView === 'list');
   replace('floor', floorView === 'floor' ? renderFloor(s, selected, mode, speed) : stationList());
@@ -202,6 +207,7 @@ function render() {
       return `<div class="pipe-stage" style="--stage:${STATIONS[type].color}"><span class="pipe-icon">${STATIONS[type].label}</span><div><strong>${STATIONS[type].short}</strong><span class="${count > 1 ? 'warning-text' : ''}">${working} working · ${count} waiting</span></div>${count > 1 ? '<i class="queue-alert" title="Work is accumulating here">!</i>' : ''}</div>`;
     }).join(''),
   );
+  replace('momentum', momentum(s));
   replace('inspector', inspector());
   replace('campaign', campaign());
   replace(
@@ -378,7 +384,7 @@ function startDialog() {
       )
       .join(
         '',
-      )}</div><label class="field-label" for="seed-input">CHALLENGE SEED <span>Same seed + same choices = same run</span></label><div class="seed-row"><input id="seed-input" maxlength="32" value="${esc(params.get('seed') || s.seed)}" spellcheck="false" autocomplete="off"/><button class="button secondary" data-action="random-seed" aria-label="Generate a new challenge seed">Shuffle</button></div><div class="start-buttons"><button class="button primary large" data-action="start">Start a new factory ${icon('arrow', 19)}</button>${saved ? '<button class="button secondary large" data-action="continue">Continue saved factory</button>' : ''}</div><p class="welcome-foot">Free to play. Runs on your device. No accounts, real agents, or purchases.</p>${saved ? '<p class="tiny-note">Starting a new factory replaces the local autosave. Export it from the menu first if you want to keep it.</p>' : ''}${storageWarning ? '<p class="warning-text">A previous save could not be loaded, or storage is unavailable. Use exported saves to keep your progress.</p>' : ''}</div>`,
+      )}</div>${studioChoices(startStudio)}<label class="field-label" for="seed-input">CHALLENGE SEED <span>Same seed + studio + choices = same run</span></label><div class="seed-row"><input id="seed-input" maxlength="32" value="${esc(params.get('seed') || s.seed)}" spellcheck="false" autocomplete="off"/><button class="button secondary" data-action="random-seed" aria-label="Generate a new challenge seed">Shuffle</button></div><div class="start-buttons"><button class="button primary large" data-action="start">Start a new factory ${icon('arrow', 19)}</button>${saved ? '<button class="button secondary large" data-action="continue">Continue saved factory</button>' : ''}</div><p class="welcome-foot">Free to play. Runs on your device. No accounts, real agents, or purchases.</p>${saved ? '<p class="tiny-note">Starting a new factory replaces the local autosave. Export it from the menu first if you want to keep it.</p>' : ''}${storageWarning ? '<p class="warning-text">A previous save could not be loaded, or storage is unavailable. Use exported saves to keep your progress.</p>' : ''}</div>`,
   );
 }
 function buildDialog() {
@@ -395,7 +401,7 @@ function buildDialog() {
       )
       .join(
         '',
-      )}</div><p class="tiny-note">Stations occupy one tile. A package takes one hour per three tiles of Manhattan distance, rounded up. Moving idle stations is free.</p>`,
+      )}</div><p class="tiny-note">Stations occupy one tile. A package takes one hour per ${s.studio === 'express' ? 'four' : 'three'} tiles of Manhattan distance, rounded up. Moving idle stations is free.</p>`,
   );
 }
 function crewDialog() {
@@ -434,7 +440,7 @@ function reportDialog(end = false) {
   const won = s.status === 'won';
   showDialog(
     end ? 'end' : 'report',
-    `${closeButton()}<span class="eyebrow">${end ? (won ? 'LOOK AT WHAT YOU BUILT' : 'EVERY FACTORY TEACHES YOU SOMETHING') : 'YOUR FACTORY, BY THE NUMBERS'}</span><h2 id="dialog-title">${end ? (won ? 'Small team. Big finish.' : 'A lesson worth keeping.') : 'The shift report.'}</h2><p class="dialog-lede">${end ? (won ? 'You met the delivery target, protected your reputation, and kept the business solvent.' : s.cash < -500 ? 'Operating costs exhausted your credit. Try accepting work earlier and expanding only at the busiest stage.' : 'The deadline arrived before all goals were met. Watch queues, accept contracts steadily, and leave time for the last delivery.') : 'A clear view of what your factory has accomplished.'}</p><div class="report-stats"><div><span>FACTORY SCORE</span><strong>${score(s).toLocaleString()}</strong></div><div><span>DELIVERIES</span><strong>${s.delivered}</strong></div><div><span>CASH</span><strong>${money(s.cash)}</strong></div><div><span>REPUTATION</span><strong>${Math.round(s.reputation)}</strong></div></div><div class="report-details"><div><span>Total revenue</span><strong>${money(s.earned)}</strong></div><div><span>Total costs</span><strong>${money(s.spent)}</strong></div><div><span>Defects caught / escaped</span><strong>${s.caught} / ${s.escaped}</strong></div><div><span>Late / cancelled contracts</span><strong>${s.stats.late} / ${s.stats.cancelled}</strong></div><div><span>Crew utilization</span><strong>${s.stats.staffedHours ? Math.round((s.stats.busyHours / s.stats.staffedHours) * 100) : 0}%</strong></div><div><span>Seed / scenario</span><strong>${esc(s.seed)} / ${SCENARIOS[s.scenario].name}</strong></div></div>${
+    `${closeButton()}<span class="eyebrow">${end ? (won ? 'LOOK AT WHAT YOU BUILT' : 'EVERY FACTORY TEACHES YOU SOMETHING') : 'YOUR FACTORY, BY THE NUMBERS'}</span><h2 id="dialog-title">${end ? (won ? 'Small team. Big finish.' : 'A lesson worth keeping.') : 'The shift report.'}</h2><p class="dialog-lede">${end ? (won ? 'You met the delivery target, protected your reputation, and kept the business solvent.' : s.cash < -500 ? 'Operating costs exhausted your credit. Try accepting work earlier and expanding only at the busiest stage.' : 'The deadline arrived before all goals were met. Watch queues, accept contracts steadily, and leave time for the last delivery.') : 'A clear view of what your factory has accomplished.'}</p><div class="report-stats"><div><span>FACTORY SCORE</span><strong>${score(s).toLocaleString()}</strong></div><div><span>DELIVERIES</span><strong>${s.delivered}</strong></div><div><span>CASH</span><strong>${money(s.cash)}</strong></div><div><span>REPUTATION</span><strong>${Math.round(s.reputation)}</strong></div></div><div class="report-details"><div><span>Best shipping streak</span><strong>${s.bestStreak} · ${money(s.comboBonus)} bonuses</strong></div><div><span>Studio / trophies</span><strong>${STUDIOS[s.studio].name} · ${s.badges.length}/6</strong></div><div><span>Total revenue</span><strong>${money(s.earned)}</strong></div><div><span>Total costs</span><strong>${money(s.spent)}</strong></div><div><span>Defects caught / escaped</span><strong>${s.caught} / ${s.escaped}</strong></div><div><span>Late / cancelled contracts</span><strong>${s.stats.late} / ${s.stats.cancelled}</strong></div><div><span>Crew utilization</span><strong>${s.stats.staffedHours ? Math.round((s.stats.busyHours / s.stats.staffedHours) * 100) : 0}%</strong></div><div><span>Seed / scenario</span><strong>${esc(s.seed)} / ${SCENARIOS[s.scenario].name}</strong></div></div>${
       s.history.length
         ? `<h3>Out the door</h3><div class="delivery-list">${s.history
             .slice(0, 12)
@@ -452,7 +458,7 @@ function menuDialog() {
   render();
   showDialog(
     'menu',
-    `${closeButton()}<span class="eyebrow">TAKE A BREATHER</span><h2 id="dialog-title">The workshop menu.</h2><div class="menu-grid"><button class="button secondary" data-action="export">${icon('download')} Export save</button><button class="button secondary" data-action="import">Import save</button><button class="button secondary" data-action="share">Share challenge</button><button class="button secondary" data-action="report">Factory report</button><button class="button secondary" data-action="help">How to play</button><button class="button secondary" data-action="new">New factory</button></div><div class="settings-row"><label for="sound-setting">Sound effects <small>Quiet feedback for actions and deliveries</small></label><input id="sound-setting" type="checkbox" data-setting="sound" ${settings.sound ? 'checked' : ''}/></div><div class="settings-row"><label for="motion-setting">Animated workshop <small>Switch off for reduced motion</small></label><input id="motion-setting" type="checkbox" data-setting="motion" ${settings.motion ? 'checked' : ''}/></div><p class="tiny-note">Autosaves stay in this browser. Export a save to move devices or keep multiple factories. Opening menus pauses the shift.</p><div class="about-line"><strong>Ship It! · v1.0.0</strong><span>Made for people who make things.</span></div>`,
+    `${closeButton()}<span class="eyebrow">TAKE A BREATHER</span><h2 id="dialog-title">The workshop menu.</h2><div class="menu-grid"><button class="button secondary" data-action="export">${icon('download')} Export save</button><button class="button secondary" data-action="import">Import save</button><button class="button secondary" data-action="share">Share challenge</button><button class="button secondary" data-action="report">Factory report</button><button class="button secondary" data-action="help">How to play</button><button class="button secondary" data-action="new">New factory</button></div><div class="settings-row"><label for="sound-setting">Sound effects <small>Quiet feedback for actions and deliveries</small></label><input id="sound-setting" type="checkbox" data-setting="sound" ${settings.sound ? 'checked' : ''}/></div><div class="settings-row"><label for="motion-setting">Animated workshop <small>Switch off for reduced motion</small></label><input id="motion-setting" type="checkbox" data-setting="motion" ${settings.motion ? 'checked' : ''}/></div><p class="tiny-note">Autosaves stay in this browser. Export a save to move devices or keep multiple factories. Opening menus pauses the shift.</p><div class="about-line"><strong>Ship It! · v1.1.0</strong><span>Made for people who make things.</span></div>`,
   );
 }
 function helpDialog() {
@@ -460,7 +466,7 @@ function helpDialog() {
   render();
   showDialog(
     'help',
-    `${closeButton()}<span class="eyebrow">THE OWNER’S MANUAL</span><h2 id="dialog-title">Find your factory’s rhythm.</h2><p class="dialog-lede">Accept a contract, start the shift, and turn a client’s idea into a shipped product.</p><div class="help-flow">${STAGES.map((type) => `<div style="--stage:${STATIONS[type].color}"><strong>${STATIONS[type].short}</strong><p>${STATIONS[type].description}</p></div>`).join('')}</div><div class="help-grid"><section><h3>Grow at the bottleneck</h3><p>Watch the waiting counts. Add a station where work piles up, hire a worker, and assign them. A workstation without crew does no work.</p></section><section><h3>Keep the lights on</h3><p>Payroll, $25 rent, and $4 per station are charged every eight hours. Contracts pay on delivery. Late deliveries lose 30% of their fee and 4 reputation.</p></section><section><h3>Quality comes back around</h3><p>Review may send defects back for a smaller build. Escaped bugs return after 12 hours, cost $180 and 12 reputation, and create unpaid repair work.</p></section><section><h3>Take care of the machines</h3><p>Wear reduces throughput. Technical debt slows build work. Maintaining an idle station takes four hours, costs $100, resets its wear, and removes 10 debt.</p></section><section><h3>Finish strong</h3><p>Campaigns require the delivery goal, at least 45 reputation, nonnegative cash, and no active contracts or pending warranty claims. A cash balance below −$500 ends a campaign. Sandbox has no end condition.</p></section><section><h3>Take your time</h3><p>Pause whenever you like. Menus and crew decisions pause the simulation. Hidden tabs pause too. Use 1×, 2×, or 4× speed when the floor is flowing.</p></section></div><div class="keyboard-guide"><span><kbd>SPACE</kbd> play / pause</span><span><kbd>N</kbd> one hour</span><span><kbd>B</kbd> build</span><span><kbd>ESC</kbd> cancel / close</span></div><div class="dialog-actions"><button class="button primary" data-action="tutorial">Walk me through it</button><button class="button secondary" data-action="close">Back to the factory</button></div><p class="tiny-note">All businesses and events are fictional. Agent behavior is a game model; no AI service, payment, or real infrastructure is connected.</p>`,
+    `${closeButton()}<span class="eyebrow">THE OWNER’S MANUAL</span><h2 id="dialog-title">Find your factory’s rhythm.</h2><p class="dialog-lede">Accept a contract, start the shift, and turn a client’s idea into a shipped product.</p><div class="help-flow">${STAGES.map((type) => `<div style="--stage:${STATIONS[type].color}"><strong>${STATIONS[type].short}</strong><p>${STATIONS[type].description}</p></div>`).join('')}</div><div class="help-grid"><section><h3>Find your studio style</h3><p>Bootstrappers save 15% on crew wages. Craft Club discovers 15% faster and adds 4 percentage points to review detection, capped at 99%. Night Owls ship 25% faster and move packages four tiles per hour.</p></section><section><h3>Keep the streak alive</h3><p>Consecutive on-time deliveries earn $50 more bonus each time, up to $200 per delivery. Late deliveries and warranty claims reset the streak. An $80 coffee run boosts throughput 35% for four working hours, with 16 hours between runs.</p></section><section><h3>Grow at the bottleneck</h3><p>Watch the waiting counts. Add a station where work piles up, hire a worker, and assign them. A workstation without crew does no work.</p></section><section><h3>Keep the lights on</h3><p>Payroll, $25 rent, and $4 per station are charged every eight hours. Contracts pay on delivery. Late deliveries lose 30% of their fee and 4 reputation.</p></section><section><h3>Quality comes back around</h3><p>Review may send defects back for a smaller build. Escaped bugs return after 12 hours, cost $180 and 12 reputation, and create unpaid repair work.</p></section><section><h3>Take care of the machines</h3><p>Wear reduces throughput. Technical debt slows build work. Maintaining an idle station takes four hours, costs $100, resets its wear, and removes 10 debt.</p></section><section><h3>Finish strong</h3><p>Campaigns require the delivery goal, at least 45 reputation, nonnegative cash, and no active contracts or pending warranty claims. A cash balance below −$500 ends a campaign. Sandbox has no end condition.</p></section><section><h3>Take your time</h3><p>Pause whenever you like. Menus and crew decisions pause the simulation. Hidden tabs pause too. Use 1×, 2×, or 4× speed when the floor is flowing.</p></section></div><div class="keyboard-guide"><span><kbd>SPACE</kbd> play / pause</span><span><kbd>N</kbd> one hour</span><span><kbd>B</kbd> build</span><span><kbd>ESC</kbd> cancel / close</span></div><div class="dialog-actions"><button class="button primary" data-action="tutorial">Walk me through it</button><button class="button secondary" data-action="close">Back to the factory</button></div><p class="tiny-note">All businesses and events are fictional. Agent behavior is a game model; no AI service, payment, or real infrastructure is connected.</p>`,
   );
 }
 function download() {
@@ -478,6 +484,7 @@ async function share() {
   url.hash = '';
   url.searchParams.set('seed', s.seed);
   url.searchParams.set('scenario', s.scenario);
+  url.searchParams.set('studio', s.studio);
   try {
     await navigator.clipboard.writeText(url.href);
     toast('Challenge link copied. It recreates the starting conditions.');
@@ -507,7 +514,7 @@ function advance(hours = 1) {
   render();
   if (s.delivered > delivered) {
     beep('ship');
-    toast('A delivery is out the door. Payment received!');
+    celebrate(s);
   }
   if (s.escaped > escaped) beep('bad');
   if (s.event) {
@@ -609,7 +616,15 @@ document.addEventListener('click', async (e) => {
   } else if (a === 'menu' || a === 'brand') menuDialog();
   else if (a === 'help') helpDialog();
   else if (a === 'report') reportDialog();
-  else if (a === 'log') {
+  else if (a === 'coffee') doAction({ type: 'coffee' });
+  else if (a === 'trophies') {
+    running = false;
+    render();
+    showDialog(
+      'trophies',
+      `${closeButton()}<span class="eyebrow">SMALL VICTORIES. BIG SHELF ENERGY.</span><h2 id="dialog-title">Your trophy shelf.</h2><p class="dialog-lede">${s.badges.length} of 6 earned in this factory. Every new run is a fresh collection.</p>${trophyCards(s)}`,
+    );
+  } else if (a === 'log') {
     running = false;
     render();
     showDialog(
@@ -627,12 +642,18 @@ document.addEventListener('click', async (e) => {
       b.classList.toggle('chosen', chosen);
       b.setAttribute('aria-pressed', String(chosen));
     });
+  } else if (a === 'studio') {
+    startStudio = el.dataset.studio;
+    document.querySelectorAll('.studio-choice').forEach((b) => {
+      b.classList.toggle('chosen', b.dataset.studio === startStudio);
+      b.setAttribute('aria-pressed', String(b.dataset.studio === startStudio));
+    });
   } else if (a === 'random-seed') {
     const bytes = new Uint32Array(1);
     crypto.getRandomValues(bytes);
     $('#seed-input').value = `SHIFT-${bytes[0].toString(36).toUpperCase()}`;
   } else if (a === 'start') {
-    s = newGame($('#seed-input').value, startScenario);
+    s = newGame($('#seed-input').value, startScenario, startStudio);
     selected = 's2';
     tab = 'inbox';
     mode = null;
